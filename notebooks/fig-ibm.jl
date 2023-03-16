@@ -23,13 +23,14 @@ function dosims(xs, mss1, mss2, mss3, kernel, ns, ng; init=[0.01, 0.5, 0.99])
             q = 1 - mean(Q)
             (ms, q)
         end
-        q3 = map(mss3) do ms
-            M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=A)
-            q = expectedq(M, init)[1]
-            (ms, 1 - q)
-        end
+#        q3 = map(mss3) do ms
+#            M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=A)
+#            q = expectedq(M, init)[1]
+#            (ms, 1 - q)
+#        end
         @info "done $x"
-        (; q1=q1, q2=q2, q3=q3, x...)
+        #(; q1=q1, q2=q2, q3=q3, x...)
+        (; q1=q1, q2=q2, x...)
     end |> DataFrame
 end
 
@@ -144,18 +145,19 @@ end
 
 xx = map(hs) do h
     @info h
-    L = 10
+    L = 20
     s = 0.05
     u = s*0.005
     k = 5
     N = 200
     τ = 1.
-    A = [HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L]
+    A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(0.5, L))
     mss = 0:0.05:1
     qs = map(mss) do ms
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=A)
-        K = BetaFlipProposal(0.5, 1.0, 0.1)
-        Q, _ = gibbs(M, K, rand(L), 11000, drop=1000)
+        #K = BetaFlipProposal(0.5, 1.0, 0.1)
+        G = GibbsSampler([UnitIntervalProposal() for i=1:L])
+        Q, _ = gibbs(M, G, rand(L), 11000, drop=1000)
         mean(Q), avgcor(Q), Q
     end
     q = 1 .- first.(qs)

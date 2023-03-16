@@ -1,5 +1,6 @@
-# Numerical integration to obtain expected allele frequencies
-# we use the integration by parts (IBP) approach suggested by Himani.
+# Numerical integration to obtain expected allele frequencies, assuming the
+# implicit equation in 𝔼[p].
+# We use the integration by parts (IBP) approach suggested by Himani.
 # For multiclass barriers, we need to solve a system of nonlinear equations,
 # each of which involves a numerical integration.
 

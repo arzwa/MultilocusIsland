@@ -25,6 +25,19 @@ diploidfitness(l::HapDipLocus, g) = g == 0 ? 0. : g == 1 ? l.s01 : l.s11
 diploidfitness(l::AbstractVector, g::AbstractVector) = 
     mapreduce(x->diploidfitness(x...), +, zip(l, g))
 
+
+# Genetic architecture
+struct Architecture{T,V}
+    loci ::Vector{HapDipLocus{T}}
+    rrate::Vector{V}  # recombination rates between neighboring loci
+end
+
+Base.length(A::Architecture) = length(A.loci)
+Base.show(io::IO, A::Architecture) = write(io, "Architecture[L=$(length(A)) loci]")
+haploidfitness(A::Architecture, g) = haploidfitness(A.loci, g)
+diploidfitness(A::Architecture, g) = diploidfitness(A.loci, g)
+ 
+
 # Mainland - Island type models
 abstract type MainlandIslandModel end
 

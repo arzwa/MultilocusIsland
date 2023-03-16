@@ -1,4 +1,7 @@
 # Individual-based simulations
+Genome{T}     = Vector{T} 
+Population{T} = Vector{Genome{T}}
+
 function simulate(model, n; pinit=zeros(nloci(model)), drop=0, thin=1)
     simulate(default_rng(), model, n, pinit, drop, thin)
 end
@@ -17,7 +20,7 @@ end
 
 struct MainlandIslandPop{M,I}
     mainland::M
-    island::I
+    island::Population{I}
 end
 
 function initialize_ibm(rng::AbstractRNG, M::HapDipMainlandIsland, pinit)
@@ -49,44 +52,63 @@ function sample(rng::AbstractRNG, model::PolymorphicMainland, n)
     map(_->[rand(rng) < p ? 0 : 1 for p in model.p], 1:n)
 end
 
+function haploidfitness(A::Architecture{T,V}, pop::Population) where {T,V}
+    w = Vector{T}(undef, length(pop))
+    for i=1:length(pop)
+        w[i] = haploidfitness(A, pop[i])
+    end
+    return lognormalize(w)
+end
+
 # Haplodiplontic generation with mainland island migration
+# XXX could be faster with some preallocation I guess...
 generation(model, pop) = generation(default_rng(), model, pop)
-function generation(rng::AbstractRNG, model::HapDipMainlandIsland, pop::MainlandIslandPop)
+function generation(rng::AbstractRNG, 
+        model::HapDipMainlandIsland, 
+        pop  ::MainlandIslandPop{M,I}) where {M,I}
     @unpack N, k, m, arch = model
     Nk = N*k
     # migration from mainland
     island = migration(rng, pop, m)
     # calculate haploid fitness
-    wg = map(x->haploidfitness(arch, x), island) |> lognormalize
+    wg = haploidfitness(arch, island)
     # sample gametes according to haploid fitness
     idxa = sample(rng, 1:N, Weights(wg), 2Nk, replace=true)
-    dips = map(1:Nk) do i
-        off = island[idxa[i]] .+ island[idxa[Nk+i]] 
-        off, diploidfitness(arch, off)
+    dips = Vector{Tuple{Genome{I},Genome{I}}}(undef, Nk)
+    ws = Vector{Float64}(undef, Nk)
+    for i=1:Nk
+        p1 = island[idxa[i]] 
+        p2 = island[idxa[Nk+i]]
+        gt = p1 .+ p2  # diploid genotype
+        ws[i] = diploidfitness(arch, gt)
+        dips[i] = (p1, p2)
     end
     # sample meiospores according to diploid fitness
-    ws   = last.(dips) |> lognormalize
+    ws   = lognormalize(ws)
     idxb = sample(rng, 1:Nk, Weights(ws), N, replace=true)
-    smpl = first.(dips)[idxb]
-    island′ = map(x->meiosis(rng, x), smpl)
+    island′ = Vector{Genome{I}}(undef, N)
+    for (i,j) in enumerate(idxb)
+        haplotypes = dips[j]
+        island′[i] = meiosis(rng, arch, haplotypes)
+    end
     mutation!(rng, island′, model)
     return reconstruct(pop, island=island′)
 end
 
-function generation(rng::AbstractRNG, model::HapMainlandIsland, pop::MainlandIslandPop)
-    @unpack N, m, arch = model
-    # migration from mainland
-    island = migration(rng, pop, m)
-    # calculate haploid fitness
-    wg = lognormalize(map(x->haploidfitness(arch, x), island))
-    # sample next generation according to haploid fitness
-    idxa = sample(rng, 1:N, Weights(wg), 2N, replace=true)
-    off = map(1:N) do i
-        meiosis(rng, island[idxa[i]] .+ island[idxa[N+i]])
-    end
-    mutation!(rng, off, model)
-    return reconstruct(model, island=island)
-end
+#function generation(rng::AbstractRNG, model::HapMainlandIsland, pop::MainlandIslandPop)
+#    @unpack N, m, arch = model
+#    # migration from mainland
+#    island = migration(rng, pop, m)
+#    # calculate haploid fitness
+#    wg = lognormalize(map(x->haploidfitness(arch, x), island))
+#    # sample next generation according to haploid fitness
+#    idxa = sample(rng, 1:N, Weights(wg), 2N, replace=true)
+#    off = map(1:N) do i
+#        meiosis(rng, island[idxa[i]] .+ island[idxa[N+i]])
+#    end
+#    mutation!(rng, off, model)
+#    return reconstruct(model, island=island)
+#end
 
 function migration(rng::AbstractRNG, metapop::MainlandIslandPop, m)
     @unpack mainland, island = metapop
@@ -110,10 +132,15 @@ function mutation!(rng::AbstractRNG, pop, model::MainlandIslandModel)
     end
 end
 
-meiosis(rng::AbstractRNG, diploid) = map(l->segregate(rng, l), diploid)
-
-function segregate(rng::AbstractRNG, l::Int)
-    l == 0 ? 0 : (l == 2 ? 1 : (rand(rng) < 0.5 ? 0 : 1))
+function meiosis(rng::AbstractRNG, arch, hs)
+    k = rand(rng, 1:2)  # parent to start from
+    L = length(hs[1])
+    g = similar(hs[1]) 
+    for i=1:L
+        g[i] = hs[k][i]
+        k = rand(rng) < arch.rrate[i] ? 1 + k % 2 : k
+    end
+    return g
 end
 
 allelefreqs(pop, ploidy=1) = reduce(.+, pop) ./ (ploidy*length(pop)) 
