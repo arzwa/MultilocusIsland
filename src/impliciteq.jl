@@ -112,7 +112,7 @@ function _gff(xs, w, L, j)
 end
 
 function classparams(M, classes, p)
-    @unpack Ne, m, u = M
+    @unpack m, u = M
     @unpack m, loci, K, L, γ, y = classes
     xs = map(zip(p, loci, γ, y)) do (pj, lj, wj, yj)
         @unpack s1, s01, s11 = lj
@@ -122,12 +122,12 @@ function classparams(M, classes, p)
     map(1:K) do j
         @unpack s1, s01, s11 = loci[j]
         g = _gff(xs, γ, L, j)
-        (sa=s1+s01, sb=s11-2s01, N=Ne, m=m*g, u=u, pm=1-y[j])
+        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
     end
 end
 
-function expectedq(M::HapDipMainlandIsland, init::Real, kwargs...)
-    sol, solver = _expectedq(M, init, kwargs...)
+function expectedq(M::MainlandIslandModel, init::Real; kwargs...)
+    sol, solver = _expectedq(M, init; kwargs...)
     return sol
 end
 
@@ -136,17 +136,17 @@ ssr(x) = sum(x .^ 2)
 
 # get the best from a number initial conditions
 # we assume the same initial frequency for all loci in the barrier BTW
-function expectedq(M::HapDipMainlandIsland, init::AbstractVector, kwargs...)
-    thesol, thesolver = _expectedq(M, init[1], kwargs...)
+function expectedq(M::MainlandIslandModel, init::AbstractVector; kwargs...)
+    thesol, thesolver = _expectedq(M, init[1]; kwargs...)
     for i=2:length(init)
-        sol, solver = _expectedq(M, init[i], kwargs...)
+        sol, solver = _expectedq(M, init[i]; kwargs...)
         better = ssr(solver.resid) < ssr(thesolver.resid)
         thesol = better ? sol : thesol
     end
     return thesol
 end
 
-function _expectedq(M::HapDipMainlandIsland, init::Real, kwargs...)
+function _expectedq(M::MainlandIslandModel, init::Real; kwargs...)
     classes = summarize_arch(M)
     function tosolve(lp, x) 
         # solve on ℝ, transform back and forth to [0,1] (otherwise the
@@ -177,4 +177,24 @@ function expectedsfs(M, q; Δq=0.05, kwargs...)
         Z = Zfun(θ[j]; kwargs...)  # normalizing constant
         reverse(map(x->Zxfun(θ[j], x, x+Δq; kwargs...)/Z, 0:Δq:1-Δq))
     end
+end
+
+
+# simple fixed point iteration
+function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
+    criterion = false
+    classes = summarize_arch(M)
+    θ  = classparams(M, classes, p)
+    ps = [p]
+    while !criterion
+        θ = classparams(M, classes, ps[end])
+        Ep = similar(p)
+        for j=1:length(θ)
+            Ep[j] = Efun(θ[j]; kwargs...)
+        end
+        ϵ = Ep .- ps[end]
+        push!(ps, Ep)
+        criterion = ssr(ϵ) < tol 
+    end
+    return 1 .- permutedims(hcat(ps...))
 end

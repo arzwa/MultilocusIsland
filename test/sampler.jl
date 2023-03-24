@@ -59,3 +59,20 @@ end
 plot(ls)
 
 PP = ess(reshape(P, (10000,1,20)))
+
+
+# debug
+Ne2N(Ne, k) = ceil(Int, Ne/(2k) + Ne)
+
+Q, G, M = let L=80, s=0.02, k=10, Ne=500, us=0.005, h=1.0, ms=1.0
+    N = Ne2N(Ne, k)
+    A = Architecture([HapDipLocus(0., -s*h, -s) for i=1:L])
+    M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=s*us, arch=A)
+    G = GibbsSampler([UnitIntervalProposal() for i=1:L])
+    Qa = gibbs(M, G, zeros(L) .+ 0.01, 5100, drop=100)
+    Qb = gibbs(M, G, ones(L) .- 0.01, 5100, drop=100)
+    vcat(Qa, Qb), G, M
+end
+
+
+

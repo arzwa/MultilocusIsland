@@ -16,13 +16,15 @@ using QuadGK
 using NonlinearSolve
 using StaticArrays
 using Bijectors
+using Bijectors: transform
 using LogExpFunctions: logit, logistic  
 import Random: default_rng
 import StatsBase: sample
 # these logit/logistic behave better for extreme arguments
 
 include("model.jl")
-export HapDipLocus, HapDipMainlandIsland, HapMainlandIsland, Architecture, sfs, harmonicmean
+export HapDipMainlandIsland, HapMainlandIsland, Architecture, sfs, harmonicmean
+export HapDipLocus, HapLocus, DipLocus
 
 include("ibm.jl")
 export simulate
@@ -32,6 +34,6 @@ include("proposal.jl")
 export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, UnitIntervalProposal
 
 include("impliciteq.jl")
-export expectedq, expectedsfs
+export expectedq, expectedsfs, fixedpointit
 
 end # module MultilocusIsland

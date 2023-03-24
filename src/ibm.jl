@@ -1,4 +1,5 @@
 # Individual-based simulations
+# Aliases
 Genome{T}     = Vector{T} 
 Population{T} = Vector{Genome{T}}
 
@@ -23,7 +24,7 @@ struct MainlandIslandPop{M,I}
     island::Population{I}
 end
 
-function initialize_ibm(rng::AbstractRNG, M::HapDipMainlandIsland, pinit)
+function initialize_ibm(rng::AbstractRNG, M::MainlandIslandModel, pinit)
     mainland = mainlandpop(M.y)     
     island   = map(_->map(i->rand(rng) < pinit[i] ? 1 : 0, 1:nloci(M)), 1:M.N)
     return MainlandIslandPop(mainland, island)
@@ -61,7 +62,6 @@ function haploidfitness(A::Architecture{T,V}, pop::Population) where {T,V}
 end
 
 # Haplodiplontic generation with mainland island migration
-# XXX could be faster with some preallocation I guess...
 generation(model, pop) = generation(default_rng(), model, pop)
 function generation(rng::AbstractRNG, 
         model::HapDipMainlandIsland, 
@@ -75,7 +75,7 @@ function generation(rng::AbstractRNG,
     # sample gametes according to haploid fitness
     idxa = sample(rng, 1:N, Weights(wg), 2Nk, replace=true)
     dips = Vector{Tuple{Genome{I},Genome{I}}}(undef, Nk)
-    ws = Vector{Float64}(undef, Nk)
+    ws   = Vector{Float64}(undef, Nk)
     for i=1:Nk
         p1 = island[idxa[i]] 
         p2 = island[idxa[Nk+i]]
@@ -95,20 +95,24 @@ function generation(rng::AbstractRNG,
     return reconstruct(pop, island=island′)
 end
 
-#function generation(rng::AbstractRNG, model::HapMainlandIsland, pop::MainlandIslandPop)
-#    @unpack N, m, arch = model
-#    # migration from mainland
-#    island = migration(rng, pop, m)
-#    # calculate haploid fitness
-#    wg = lognormalize(map(x->haploidfitness(arch, x), island))
-#    # sample next generation according to haploid fitness
-#    idxa = sample(rng, 1:N, Weights(wg), 2N, replace=true)
-#    off = map(1:N) do i
-#        meiosis(rng, island[idxa[i]] .+ island[idxa[N+i]])
-#    end
-#    mutation!(rng, off, model)
-#    return reconstruct(model, island=island)
-#end
+function generation(rng::AbstractRNG, 
+        model::HapMainlandIsland, 
+        pop::MainlandIslandPop{M,I}) where {M,I}
+    @unpack N, m, arch = model
+    # migration from mainland
+    island = migration(rng, pop, m)
+    # calculate haploid fitness
+    wg = haploidfitness(arch, island)
+    # sample next generation according to haploid fitness
+    idx = sample(rng, 1:N, Weights(wg), 2N, replace=true)
+    island′ = Vector{Genome{I}}(undef, N)
+    for i=1:N
+        haplotypes = (island[idx[i]], island[idx[N+i]])
+        island′[i] = meiosis(rng, arch, haplotypes)
+    end
+    mutation!(rng, island′, model)
+    return reconstruct(pop, island=island′)
+end
 
 function migration(rng::AbstractRNG, metapop::MainlandIslandPop, m)
     @unpack mainland, island = metapop

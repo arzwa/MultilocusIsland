@@ -25,12 +25,23 @@ diploidfitness(l::HapDipLocus, g) = g == 0 ? 0. : g == 1 ? l.s01 : l.s11
 diploidfitness(l::AbstractVector, g::AbstractVector) = 
     mapreduce(x->diploidfitness(x...), +, zip(l, g))
 
+# aliases
+HapLocus(s) = HapDipLocus(s, 0., 0.)
+DipLocus(s01, s11) = HapDipLocus(0, s01, s11)
 
 # Genetic architecture
+"""
+    Architecture
+
+Genetic architecture, consists of a bunch of loci with certain effects, and a
+linkage map (recombination rates). We assume `rrate[i]` gives the **probability
+of a crossover** between locus `i` and locus `i+1`. 
+"""
 struct Architecture{T,V}
     loci ::Vector{HapDipLocus{T}}
     rrate::Vector{V}  # recombination rates between neighboring loci
 end
+Architecture(loci) = Architecture(loci, fill(0.5, length(loci)))
 
 Base.length(A::Architecture) = length(A.loci)
 Base.show(io::IO, A::Architecture) = write(io, "Architecture[L=$(length(A)) loci]")
@@ -49,7 +60,8 @@ harmonicmean(x, y) = 1/(1/x + 1/y)
 """
     HapDipMainlandIsland{A}
 
-Haplodiplontic mainland-island model.
+Haplodiplontic mainland-island model. Note that migration is assumed to occur
+only in the haploid phase (think of spore dispersal).
 """
 @with_kw struct HapDipMainlandIsland{A} <: MainlandIslandModel
     N::Int
@@ -63,6 +75,8 @@ end
 # note `y` are the frequencies of the derived alleles, i.e. what we would call
 # q_mainland (frequency of the selected alleles on the mainland). 
 
+getNe(m::HapDipMainlandIsland) = m.Ne
+
 # Not retested
 # Haploid only -- no `k`
 """
@@ -70,13 +84,15 @@ end
 
 Haplontic mainland-island model.
 """
-@with_kw struct HapMainlandIsland{A,I,M} <: MainlandIslandModel
+@with_kw struct HapMainlandIsland{A} <: MainlandIslandModel
     N::Int
     m::Float64
     u::Float64
     arch::A      # genetic architecture
     y::Vector{Float64} = ones(length(arch))
 end
+
+getNe(m::HapMainlandIsland) = m.N
 
 nloci(M::MainlandIslandModel) = length(M.arch)
 
@@ -94,9 +110,9 @@ end
 function summarize_arch(M::MainlandIslandModel)
     # get the different classes of loci
     L = length(M.arch)
-    w = countmap(M.arch)
-    I = indexmap(M.arch)
-    l = unique(M.arch)
+    w = countmap(M.arch.loci)
+    I = indexmap(M.arch.loci)
+    l = unique(M.arch.loci)
     γ = [w[k] for k in l] 
     y = [M.y[I[k]] for k in l] 
     K = length(l)

@@ -47,27 +47,6 @@ function propose(d::BetaFlipProposal, x::Real)
     end
 end
 
-#function gff(loci::Vector{<:HapDipLocus}, p, y, j)
-#    x = 0.
-#    for i=1:length(p)
-#        i == j && continue
-#        @unpack s1, s01, s11 = loci[i]
-#        x += (y[i]-(1-p[i]))*(s1 + s01 + (s11 - 2s01)*(1-p[i]))
-#    end
-#    return exp(2x)
-#end
-
-# Get recombination rates between focal locus `j` and other loci
-# Note that when the model is specified with pairwise *recombination* rates
-# (recombination fractions), we need to convert them to map distances (expected
-# number of cross overs), add them, and convert back to recombination
-# probabilities...
-#function _rrates(xs, j)
-#    left = reverse(min.(0.5, 1 .- cumprod(1 .- xs[j-1:-1:1])))
-#    rght = min.(0.5, 1 .- cumprod(1 .- xs[j:end-1]))
-#    [left; NaN; rght]
-#end
-
 haldane(y) = 0.5*(1-exp(-y))
 invhaldane(x) = -log(1 - 2x)
 
@@ -98,8 +77,9 @@ function unnormϕ(M, ps, j)
 end
 
 function unnormϕ(M::MainlandIslandModel, locus::HapDipLocus, p, y, g) 
-    @unpack Ne, m, u = M
+    @unpack m, u = M
     @unpack s1, s01, s11 = locus
+    Ne = getNe(M)
     A  = 2Ne*(u + m*g*y) - 1
     B  = 2Ne*(u + m*g*(1-y)) - 1
     sa = s1 + s01
@@ -133,7 +113,7 @@ function gibbs_update(model, kernel, p, ℓ, j)
     pj, qj = propose(kernel, p[j])
     _p[j] = pj
     _ℓ[j] = unnormϕ(model, _p, j)
-    if !(log(rand()) < _ℓ[j] - ℓ[j] + qj)  # reject
+    if !isfinite(_ℓ[j]) || !(log(rand()) < _ℓ[j] - ℓ[j] + qj)  # reject
         _p[j] = p[j]
         _ℓ[j] = ℓ[j]
     end
@@ -153,70 +133,70 @@ function joint_update(model, kernel, p, ℓ)
     return _p, _ℓ
 end
 
-
+# -----------------------------
 # New take using adaptive stuff
 
 struct GibbsSampler{P}
     proposals::Vector{P}
 end
 
+Base.show(io::IO, g::GibbsSampler) = write(io, "GibbsSampler(L=$(length(g.proposals)))")
+
 function gibbs(model, smpler::GibbsSampler, p::Vector{T}, n; drop=0) where T
     L = length(p)
-    ℓ = T[unnormϕ(model, p, j) for j=1:L]
     P = Matrix{T}(undef, n, L)
-    Λ = Vector{T}(undef, n)
     for i=1:n 
-        p, ℓ = joint_update(model, smpler, p, ℓ)
+        p = joint_update(model, smpler, p)
         for j=1:length(p)
-            p, ℓ = gibbs_update(model, smpler, p, ℓ, j)
-            p, ℓ = switch_update(model, smpler, p, ℓ, j)
+            p = gibbs_update(model, smpler, p, j)
+            p = switch_update(model, smpler, p, j)
         end
         P[i,:] = p
-        Λ[i]   = sum(ℓ) 
     end
-    1 .- P[drop+1:end,:], Λ  
+    1 .- P[drop+1:end,:]
     # We are sampling the frequency of the 0 allele (typically locally
     # beneficial). For consistency with individual-based simulations we should
     # report the frequency of the 1 allele (usually referred to as q)
 end
 
-function gibbs_update(model, smpler::GibbsSampler, p, ℓ, j)
-    _p = copy(p)
-    _ℓ = copy(ℓ)
+function gibbs_update(model, smpler::GibbsSampler, p, j)
+    # compute the present factor (before proposal -- XXX the factor has changed
+    # since we last saw it due to the updates at other sites!)
+    ℓ = unnormϕ(model, p, j)
+    # make a copy of the p vector and do a proposal at site j
     prop = smpler.proposals[j]
+    _p = copy(p)
     pj, qj = prop(p[j])
     _p[j] = pj
-    _ℓ[j] = unnormϕ(model, _p, j)
-    if !(log(rand()) < _ℓ[j] - ℓ[j] + qj)  # reject
+    _ℓ = unnormϕ(model, _p, j)
+    if !isfinite(_ℓ) || !(log(rand()) < _ℓ - ℓ + qj)  # reject
         _p[j] = p[j]
-        _ℓ[j] = ℓ[j]
     else
         accept!(prop)
     end
-    return _p, _ℓ
+    return _p
 end
 
-function switch_update(model, smpler::GibbsSampler, p, ℓ, j)
+function switch_update(model, smpler::GibbsSampler, p, j)
+    ℓ = unnormϕ(model, p, j)
     _p = copy(p)
-    _ℓ = copy(ℓ)
     _p[j] = 1 - p[j]
-    _ℓ[j] = unnormϕ(model, _p, j)
-    if !(log(rand()) < _ℓ[j] - ℓ[j])  # reject
+    _ℓ = unnormϕ(model, _p, j)
+    if !isfinite(_ℓ) || !(log(rand()) < _ℓ - ℓ)  # reject
         _p[j] = p[j]
-        _ℓ[j] = ℓ[j]
     end
-    return _p, _ℓ
+    return _p
 end
 
-function joint_update(model, smpler::GibbsSampler, p, ℓ)
-    _p = 1 .- p
-    _ℓ = [unnormϕ(model, _p, j) for j=1:length(p)]
-    L = sum(_ℓ)
-    if !isfinite(L) || !(log(rand()) < L - sum(ℓ))  # reject
+function joint_update(model, smpler::GibbsSampler, p)
+   _p = 1 .- p
+    ℓ = [unnormϕ(model,  p, j) for j=1:length(p)]
+   _ℓ = [unnormϕ(model, _p, j) for j=1:length(p)]
+    L = sum( ℓ)
+   _L = sum(_ℓ)
+    if !isfinite(_L) || !(log(rand()) < _L - L)  # reject
         _p = p
-        _ℓ = ℓ
     end
-    return _p, _ℓ
+    return _p
 end
-
 
