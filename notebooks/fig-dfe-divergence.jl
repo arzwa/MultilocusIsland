@@ -46,15 +46,15 @@ Ls  = [1, 10, 20, 40, 80, 160]
 n   = 5000      # Gibbs samples
 a,b = 1, 1
 hd  = Beta(a,b) # distribution of `h` for new mutations
-ker = BetaFlipProposal(0.2, 1.0, 0.1)
+GS(L) = GibbsSampler([UnitIntervalProposal() for i=1:L])
 
 df1 = tmap(Iterators.product(Ls, τs, mss)) do (L, τ, ms)
     nrep = max(2, 40÷L)
     map(1:nrep) do j
         h = sample_h1(hd, τ, L)
-        A = [HapDipLocus(-s*(1-τ), -s*h[i]*τ, -s*τ) for i=1:L]
+        A = Architecture([HapDipLocus(-s*(1-τ), -s*h[i]*τ, -s*τ) for i=1:L])
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=A)
-        Q, _ = gibbs(M, ker, rand(L), n+100, drop=100)
+        Q = gibbs(M, GS(L), rand(L), n+100, drop=100)
         @info "(done) $L, $τ, $ms, $j"
         (L=L, τ=τ, h=h, ms=ms, rep=j, 
          q=mean(Q), qs=vec(mean(Q, dims=1)), Q=cor(Q), 

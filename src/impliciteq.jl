@@ -3,6 +3,8 @@
 # We use the integration by parts (IBP) approach suggested by Himani.
 # For multiclass barriers, we need to solve a system of nonlinear equations,
 # each of which involves a numerical integration.
+# We also need to compute 𝔼[pq] (i.e. expected heterozygosity) under Wright's
+# distribution.
 
 # The exponent of p and (1-p) resp. in Wright's distribution, +1
 Afun(N, u, m, pm) = 2N*(u + m*pm)
@@ -17,7 +19,7 @@ Cfun(N, p, sa, sb) = exp(-N*p*(2sa + sb*(2-p)))
 lϕfun(p, N, u, m, pm, sa, sb) = 
     (Afun(N,u,m,pm)-1)*log(p) + (Bfun(N,u,m,pm)-1)*log(1-p) - N*p*(2sa+sb*(2-p))
 
-function singlelocus_sfs(N, u, m, pm, sa, sb, Δ=0.02; kwargs...)
+function singlelocus_sfs(N, u, m, pm, sa, sb; Δ=0.02, kwargs...)
     Z = log(Zfun((N=N, u=u, m=m, pm=pm, sa=sa, sb=sb); kwargs...))
     ps = (Δ/2):Δ:(1-Δ/2)
     xs = map(p->exp(lϕfun(p, N, u, m, pm, sa, sb) - Z), ps)
@@ -72,7 +74,7 @@ function Z1fun(θ, x; kwargs...)
 	@unpack sa, sb, N, m, u, pm = θ
     A = Afun(N, u, m, pm)
     B = Bfun(N, u, m, pm)
-    a = (1/B)*(x)^B*x^(A-1)*Cfun(N, x, sa, sb)
+    a = (1/B)*(1-x)^B*x^(A-1)*Cfun(N, x, sa, sb)
     b, _ = quadgk(p->(((1-p)^B)/B)*gpfun(p, θ), x, 1; kwargs...)
     return a - b
 end
@@ -80,9 +82,9 @@ end
 # General x to y integral
 function Zxfun(θ, x, y; kwargs...)
 	@unpack sa, sb, N, m, u, pm = θ
-    #x == 0 && y == 1 && return Zfun(θ; kwargs...)
-    #x == 0 && return Z0fun(θ, y; kwargs...)
-    #y == 1 && return Z1fun(θ, x; kwargs...)
+    x ≈ 0 && y ≈ 1 && return Zfun(θ; kwargs...)
+    x ≈ 0 && return Z0fun(θ, y; kwargs...)
+    y ≈ 1 && return Z1fun(θ, x; kwargs...)
     I, _ = quadgk(p->ϕfun(p, N, u, m, pm, sa, sb), x, y; kwargs...)
     return I
 end
@@ -98,8 +100,17 @@ function Yfun(θ; kwargs...)
 	return L + R1 + R2
 end
 
+function Epqfun(θ; kwargs...)
+	@unpack sa, sb, N, m, u, pm = θ
+    A = Afun(N,u,m,pm)
+    B = Bfun(N,u,m,pm)
+    N, _ = quadgk(p -> p^A * (1-p)^B * Cfun(N,p,sa,sb), 0., 1.)
+    Z = Zfun(θ; kwargs...)
+    return N/Z
+end
+
 # Expected value
-Efun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
+Epfun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
 
 # The gene flow factor at a single locus of a particular class due to the other
 # loci of the same and other classes.
@@ -111,6 +122,9 @@ function _gff(xs, w, L, j)
     return exp(2g)
 end
 
+# Gather all parameters for the single-locus Wright distribution models
+# assocaietd with each class of loci. This also involves computing the
+# effective migration rates for all classes of loci.
 function classparams(M, classes, p)
     @unpack m, u = M
     @unpack m, loci, K, L, γ, y = classes
@@ -118,6 +132,25 @@ function classparams(M, classes, p)
         @unpack s1, s01, s11 = lj
         aj = s1 + s01 + (s11 - 2s01)*(1-pj) 
         (yj-(1-pj))*aj
+    end
+    map(1:K) do j
+        @unpack s1, s01, s11 = loci[j]
+        g = _gff(xs, γ, L, j)
+        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
+    end
+end
+
+# with heterozygosity
+function classparams(M, classes, p, pq)
+    @unpack m, u = M
+    @unpack m, loci, K, L, γ, y = classes
+    xs = map(zip(p, pq, loci, γ, y)) do (pj, pqj, lj, wj, yj)
+        @unpack s1, s01, s11 = lj
+        # exp(2L[sa(qₘ - Eq) + sb(E[pq] - pₘEq)])
+        sa = s1 + s01 
+        sb = s11 - 2s01
+        qj = 1-pj
+        sa*(yj - qj) + sb*(pqj - (1-yj)*qj) 
     end
     map(1:K) do j
         @unpack s1, s01, s11 = loci[j]
@@ -156,7 +189,7 @@ function _expectedq(M::MainlandIslandModel, init::Real; kwargs...)
         θ = classparams(M, classes, p)
         Ep = similar(p)
         for j=1:length(θ)
-            Ep[j] = Efun(θ[j]; kwargs...)
+            Ep[j] = Epfun(θ[j]; kwargs...)
         end
         return logit.(Ep) - lp
     end
@@ -170,18 +203,19 @@ end
 
 # Compute the expected SFS for each class of loci conditioning on the gff being
 # at its expected value? I think this is what's in Himani's fig 1C is?
-function expectedsfs(M, q; Δq=0.05, kwargs...)
+function expectedsfs(M, q; step=0.05, f=identity, kwargs...)
     classes = summarize_arch(M)
     θ = classparams(M, classes, 1 .- q)
+    x = (step/2):step:(1-step/2)
     map(1:length(θ)) do j
         Z = Zfun(θ[j]; kwargs...)  # normalizing constant
-        reverse(map(x->Zxfun(θ[j], x, x+Δq; kwargs...)/Z, 0:Δq:1-Δq))
+        y = reverse(map(x->Zxfun(θ[j], x, x+step; kwargs...)/Z, 0:step:1-step))
+        x, f.(y)
     end
 end
 
-
 # simple fixed point iteration
-function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
+function _fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
     criterion = false
     classes = summarize_arch(M)
     θ  = classparams(M, classes, p)
@@ -190,7 +224,7 @@ function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwarg
         θ = classparams(M, classes, ps[end])
         Ep = similar(p)
         for j=1:length(θ)
-            Ep[j] = Efun(θ[j]; kwargs...)
+            Ep[j] = Epfun(θ[j]; kwargs...)
         end
         ϵ = Ep .- ps[end]
         push!(ps, Ep)
@@ -198,3 +232,32 @@ function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwarg
     end
     return 1 .- permutedims(hcat(ps...))
 end
+
+# with E[pq]
+function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
+    criterion = false
+    classes = summarize_arch(M)
+    θ   = classparams(M, classes, p)
+    pq  = [Epqfun(θ[j]; kwargs...) for j=1:length(θ)]
+    ps  = [p]
+    pqs = [pq]
+    while !criterion
+        θ = classparams(M, classes, ps[end], pqs[end])
+        Ep  = similar(p)
+        Epq = similar(pq)
+        for j=1:length(θ)
+            Ep[j]  = Epfun( θ[j]; kwargs...)
+            Epq[j] = Epqfun(θ[j]; kwargs...)
+        end
+        ϵ = Ep .- ps[end]
+        push!(ps, Ep)
+        push!(pqs, Epq)
+        criterion = ssr(ϵ) < tol 
+    end
+    _ps  = 1 .- permutedims(hcat(ps...))
+    _pqs = permutedims(hcat(pqs...))
+    return cat(_ps, _pqs, dims=3)
+end
+
+
+

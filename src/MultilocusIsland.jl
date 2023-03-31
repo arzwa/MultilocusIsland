@@ -9,6 +9,7 @@ module MultilocusIsland
 
 using StatsBase
 using Random
+using Printf
 using Parameters
 using Distributions
 using ThreadTools
@@ -18,6 +19,8 @@ using StaticArrays
 using Bijectors
 using Bijectors: transform
 using LogExpFunctions: logit, logistic  
+using ProgressMeter
+using Roots, ForwardDiff # for deterministic bifurcation analysis
 import Random: default_rng
 import StatsBase: sample
 # these logit/logistic behave better for extreme arguments
@@ -35,5 +38,8 @@ export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, 
 
 include("impliciteq.jl")
 export expectedq, expectedsfs, fixedpointit
+
+include("bifurcation.jl")
+export findroots_ms
 
 end # module MultilocusIsland

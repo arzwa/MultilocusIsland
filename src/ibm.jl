@@ -12,7 +12,7 @@ function simulate(rng, model, n, pinit, drop=0, thin=1)
     ps  = allelefreqs(pop.island)
     Ps  = Matrix{eltype(ps)}(undef, n, nloci(model))
     Ps[1,:] = ps
-    for i=2:n
+    @showprogress 1 "[Running simulation]" for i=2:n
         pop = generation(rng, model, pop)
         Ps[i,:] = allelefreqs(pop.island)
     end

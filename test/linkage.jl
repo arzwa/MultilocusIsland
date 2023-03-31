@@ -49,10 +49,11 @@ L = 20
 s = 0.01
 h = 0.8
 τ = 0.0
-r = s*1
+r = s*5
 N = 220
 k = 5
 u = s*0.005
+mss = 0.1:0.1:0.8
 
 xs = map(1:5) do rep
     A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(r, L)) 
@@ -64,14 +65,12 @@ xs = map(1:5) do rep
     end
 end
 
-#ker = BetaFlipProposal(0.5, 1.0, 0.1)
-ker = BetaProposal(0.2)
 ys = map(1:5) do rep
     A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(r, L)) 
     map(mss) do ms
         @info (rep, ms)
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=s*0.005)
-        Q, _ = gibbs(M, ker, rand(L), 5100, drop=100)
+        Q = gibbs(M, GibbsSampler(L), rand(L), 5100, drop=100)
         vec(mean(Q, dims=1))
     end
 end

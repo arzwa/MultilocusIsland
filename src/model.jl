@@ -12,8 +12,8 @@ struct HapDipLocus{T}
     s11 :: T  # diploid homozygous effect
 end
 
-Base.show(io::IO, l::HapDipLocus) = 
-    write(io, "Locus(s₁=$(l.s1), s₀₁=$(l.s01), s₁₁=$(l.s11))")
+Base.show(io::IO, l::HapDipLocus) = write(io, "HapDipLocus$(string(l))")
+Base.string(l::HapDipLocus) = @sprintf "(%.3f, %.3f, %.3f)" l.s1 l.s01 l.s11
 
 # We are dealing with fitness on the log-scale. Note that we assume fitness is
 # multiplicative across loci.
@@ -42,9 +42,11 @@ struct Architecture{T,V}
     rrate::Vector{V}  # recombination rates between neighboring loci
 end
 Architecture(loci) = Architecture(loci, fill(0.5, length(loci)))
+Architecture(locus::HapDipLocus, L::Int) = Architecture([locus for i=1:L], fill(0.5, L))
 
 Base.length(A::Architecture) = length(A.loci)
 Base.show(io::IO, A::Architecture) = write(io, "Architecture[L=$(length(A)) loci]")
+Base.getindex(A::Architecture, i)  = A.loci[i] 
 haploidfitness(A::Architecture, g) = haploidfitness(A.loci, g)
 diploidfitness(A::Architecture, g) = diploidfitness(A.loci, g)
  
@@ -97,11 +99,12 @@ getNe(m::HapMainlandIsland) = m.N
 nloci(M::MainlandIslandModel) = length(M.arch)
 
 function sfs(ps; step=0.02, f=identity)
-    hs = fit(Histogram, ps, 0:step:1) 
+    hs = fit(Histogram, ps, 0:step:1+step) 
     hs = StatsBase.normalize(hs, mode=:probability)
-    es = collect(hs.edges)[1][2:end] .- step/2
-    ws = f.(hs.weights)
-    es, ws
+    es = collect(hs.edges)[1][2:end-1] .- step/2
+    ws = hs.weights[1:end-1]    # make sure we add the fixed states to the last bin 
+    ws[end] += hs.weights[end] 
+    es, f.(ws)
 end
 
 # For these things and the expected values, it would be nicer of the

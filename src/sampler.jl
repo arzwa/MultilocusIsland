@@ -71,6 +71,13 @@ function gff(A::Architecture, p, y, j)
     return exp(x)  # XXX factor 2 disappears here with linkage -> in the rᵢ
 end
 
+function unnormϕ(M, ps)
+    map(1:length(ps)) do j
+        g = gff(M.arch, ps, M.y, j)  # gene flow factor due to L-1 other loci
+        unnormϕ(M, M.arch.loci[j], ps[j], M.y[j], g)
+    end
+end
+
 function unnormϕ(M, ps, j)
     g = gff(M.arch, ps, M.y, j)  # gene flow factor due to L-1 other loci
     return unnormϕ(M, M.arch.loci[j], ps[j], M.y[j], g)
@@ -140,12 +147,14 @@ struct GibbsSampler{P}
     proposals::Vector{P}
 end
 
+GibbsSampler(L::Int) = GibbsSampler([UnitIntervalProposal() for i=1:L])
+
 Base.show(io::IO, g::GibbsSampler) = write(io, "GibbsSampler(L=$(length(g.proposals)))")
 
 function gibbs(model, smpler::GibbsSampler, p::Vector{T}, n; drop=0) where T
     L = length(p)
     P = Matrix{T}(undef, n, L)
-    for i=1:n 
+    @showprogress 0.1 "[Sampling]" for i=1:n 
         p = joint_update(model, smpler, p)
         for j=1:length(p)
             p = gibbs_update(model, smpler, p, j)

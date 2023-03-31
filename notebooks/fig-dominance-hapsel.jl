@@ -46,7 +46,7 @@ Xs = map(hs) do h
         # quadrature
         Z = tmap(mss3) do ms
             M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            q3 = fixedpointit(M, [1.0])[end]
+            q3 = fixedpointit(M, [0.0])[end,1,1]
             (ms, q3)
         end
         (t, X, Y, Z)
@@ -55,13 +55,14 @@ Xs = map(hs) do h
 end
 
 # Save the simulations
-serialize("data/dominance-haploidselb.jls", Xs)
+serialize("data/dominance-haploidsel.jls", Xs)
 
 # Make a plots
-map(enumerate(Xs)) do (i,(h, Y))
+map(enumerate(Xs)) do (j,(h, Y))
     P = plot()
     map(enumerate(Y)) do (i,(t, X, Y, Z))
         c = i
+        Z = Ys[j][2][i][2]
         plot!(first.(Z), 1 .- last.(Z), 
               color=c, title="\$h=$h\$",#, L=$L, N_es=$Ns\$", 
               label="",lw=2.5, alpha=0.3)
@@ -78,8 +79,9 @@ map(enumerate(Xs)) do (i,(h, Y))
 end |> x->plot(x..., grid=false, ms=3, ylim=(0,1), xlim=(0,1.05), 
                margin=3Plots.mm, layout=(1,3), legend=:topright,
               size=(700,200), legendfont=6)
+
 #savefig("img/domtauL40Nes4.pdf")
-savefig("/home/arthur_z/vimwiki/build/img/2023-03-23/domtau.svg")
+savefig("/home/arthur_z/vimwiki/build/img/2023-03-30/domtau.svg")
 
 
 # fixed point iteration starting from no differentiation
@@ -91,7 +93,7 @@ Ys = map(hs) do h
         arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
         Z = tmap(mss3) do ms
             M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            q3 = fixedpointit(M, [0.0])[end]
+            q3 = fixedpointit(M, [0.0])[end,1,1]
             (ms, q3)
         end
         (t, Z)
@@ -176,43 +178,4 @@ end
 plot!(xlabel="\$m/s\$", ylabel="\$q\$", size=(300,230), legend=:bottomright)
 
 
-# underdominance
-# It takes quite a while for the IBMs to reach equilibrium it seems. The MRF
-# seems to do quite a good job... Should make this more precise...
-# There is a strong correlation between different loci.
-Ne2N(Ne, k) = ceil(Int, Ne/(2k) + Ne)
-k  = 5
-h  = 1.5 
-t  = 1.
-Ns = 4.  
-s  = 0.02
-N  = Ne2N(Ns/s, k) 
-Ls = 1.
-L  = ceil(Int, Ls/s)
-u  = 0.005*s
-arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
-XX = tmap(0:0.1:1) do ms
-    M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-    _, Q1  = simulate(M, 105000, drop=5000, thin=10) 
-    q1 = mean(Q1)
-    Q2 = gibbs(M, GS(L), rand(length(arch)), 5500, drop=500)
-    q2 = mean(Q2)
-    ss = vec(ess(Chains(Q2))[:,2]) 
-    q3 = fixedpointit(M, [1.0])[end]
-    q4 = fixedpointit(M, [0.0])[end]
-    @show ms
-    ms, q1, q2, q3, q4, Q1, Q2, ss
-end
-
-P1 = scatter(first.(XX), getindex.(XX,2), label="IBM", legend=:bottomright, markerstrokecolor=1, ms=4)
-plot!(first.(XX), getindex.(XX,3), label="MRF")
-plot!(first.(XX), getindex.(XX,4), label="E+")
-plot!(first.(XX), getindex.(XX,5), label="E-", xlabel="\$m/s\$", ylabel="\$q\$")
-
-P2 = plot( XX[4][6][:,4], xlabel="generation / 10", ylabel="\$q\$")
-plot!(XX[4][6][:,5])
-plot!(XX[4][6][:,6])
-plot!(XX[4][6][:,7], legend=false)
-
-plot(P1,P2,size=(500,200))
-savefig("/home/arthur_z/vimwiki/build/img/2023-03-23/underdomh1.5.svg")
+savefig("/home/arthur_z/vimwiki/build/img/2023-03-27/h1fp.pdf")

@@ -21,8 +21,12 @@ _, P = simulate(M, 1000)
 G = GibbsSampler([UnitIntervalProposal() for i=1:L])
 Q, l = gibbs(M, G, rand(L), 10000)
 
-fp = fixedpointit(M, [0.5])
+fp = MultilocusIsland._fixedpointit(M, [0.5])
 # Note that the Gibbs sampler/fixed point iteration for the haploid model is
 # implemented as a special case of the diploid model (this is not true for the
 # IBM).
+
+A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(0.5, L)) 
+M = HapDipMainlandIsland(N=N, k=k, m=m, arch=A, u=u)
+fp = MultilocusIsland.fixedpointit(M, [0.5])
 
