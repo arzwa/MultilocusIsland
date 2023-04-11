@@ -27,7 +27,7 @@ diploidfitness(l::AbstractVector, g::AbstractVector) =
 
 # aliases
 HapLocus(s) = HapDipLocus(s, 0., 0.)
-DipLocus(s01, s11) = HapDipLocus(0, s01, s11)
+DipLocus(s01, s11) = HapDipLocus(0., s01, s11)
 
 # Genetic architecture
 """
@@ -47,9 +47,19 @@ Architecture(locus::HapDipLocus, L::Int) = Architecture([locus for i=1:L], fill(
 Base.length(A::Architecture) = length(A.loci)
 Base.show(io::IO, A::Architecture) = write(io, "Architecture[L=$(length(A)) loci]")
 Base.getindex(A::Architecture, i)  = A.loci[i] 
+
+function Base.vcat(A1::Architecture, A2::Architecture)
+    Architecture(vcat(A1.loci, A2.loci), vcat(A1.rrate, A2.rrate))
+end
+
+function Base.push!(A::Architecture, l, r)
+    push!(A.loci, l)
+    push!(A.rrate,r)
+end
+
 haploidfitness(A::Architecture, g) = haploidfitness(A.loci, g)
 diploidfitness(A::Architecture, g) = diploidfitness(A.loci, g)
- 
+
 
 # Mainland - Island type models
 abstract type MainlandIslandModel end

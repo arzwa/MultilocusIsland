@@ -70,3 +70,5 @@ x2, y2 = sfs(vec(Q2), step=0.05, f=log10)
 plot!(x2, y2)
 x, y = sfs(vec(Q), step=0.05, f=log10)
 plot!(x, y)
+
+

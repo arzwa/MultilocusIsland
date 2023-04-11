@@ -124,7 +124,7 @@ function migration(rng::AbstractRNG, metapop::MainlandIslandPop, m)
     return vcat(migrants, residents)
 end
 
-function mutation!(rng::AbstractRNG, pop, model::MainlandIslandModel)
+function mutation!(rng::AbstractRNG, pop, model)
     @unpack N, u = model
     L = length(pop[1])
     n = rand(rng, Poisson(u*L*N))
@@ -147,5 +147,6 @@ function meiosis(rng::AbstractRNG, arch, hs)
     return g
 end
 
-allelefreqs(pop, ploidy=1) = reduce(.+, pop) ./ (ploidy*length(pop)) 
+allelefreqs(pop::Population{T}, ploidy=1) where T = 
+    reduce(.+, pop) ./ (ploidy*length(pop)) 
 

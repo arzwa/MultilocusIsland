@@ -20,7 +20,7 @@ Find the stable and unstable (if any) internal fixed points for a deterministic
 multilocus model with `L` equal effect loci. This finds the roots at intervals,
 decreasing the step adaptively until they collide.
 """
-function findroots_ms(sa, sb, L; stepsize=0.005, tol=1e-2, maxit=10000)
+function findroots_ms(sa, sb, L; ms0=0., stepsize=0.005, tol=1e-2, maxit=10000)
     s = -(sb + 2sa)  # this is the s scale
 	ms = 0.
 	zs, ds = roots_stab(sa, sb, ms*s, L)
@@ -51,5 +51,68 @@ function findroots_ms(sa, sb, L; stepsize=0.005, tol=1e-2, maxit=10000)
 	x[stab], y[stab], x[unstab], y[unstab] 
 end
 
+# find the critical m/s (either where two fixed points collide, or where the
+# stable equilibrium disappears).
+function critical_ms(sa, sb, L; mmax=1., tol=1e-2)
+    s = -(sb + 2sa)  # this is the s scale 
+    lb = 0.
+    # find an upper bound
+    ub = mmax
+    zs, ds = roots_stab(sa, sb, ub*s, L)
+    while length(zs) > 0
+        lb = ub
+        ub *= 2
+        zs, ds = roots_stab(sa, sb, ub*s, L)
+    end
+    # bisect the interval that we found until we reach the desired tolerance
+    ms = (ub + lb) / 2
+    zs, ds = roots_stab(sa, sb, ms*s, L)
+    while true
+        if length(zs) > 0 
+            lb = ms
+        else
+            ub = ms
+        end
+        ms′ = (ub + lb) / 2
+        abs(ms′ - ms) < tol && break
+        ms = ms′
+        zs, ds = roots_stab(sa, sb, ms*s, L)
+    end
+    # the upper bound
+    zs, ds = roots_stab(sa, sb, lb*s, L)
+    return ms, zs, ds
+end
+
 # The above assumes equal effect loci. We should however be able to generalize
-# it to arbitrary effect loci.
+# it to arbitrary effect loci. We have to solve a (potentially big) nonlinear
+# system of equilibrium conditions to do this. We should construct this
+# system, and then solve it using nlsolve.
+
+function nlsystem(M)
+    classes = summarize_arch(M)
+    function system(lp, classes)
+        @unpack m, loci, K, L, γ, y = classes
+        p = logistic.(lp)
+        xs = map(zip(p, loci, γ, y)) do (pj, lj, wj, yj)
+            @unpack s1, s01, s11 = lj
+            aj = s1 + s01 + (s11 - 2s01)*(1-pj) 
+            (yj-(1-pj))*aj
+        end
+        map(1:K) do j
+            @unpack s1, s01, s11 = loci[j]
+            g  = _gff(xs, γ, L, j)
+            sa = s1+s01
+            sb = s11-2s01
+            m*g*(y[j] - (1-p[j])) + p[j]*(1-p[j])*(sa + sb*(1-p[j]))
+        end
+    end
+    system, classes
+end
+
+function solve(M::MainlandIslandModel, init; kwargs...)
+    system, classes = nlsystem(M)
+    prob = NonlinearProblem{false}(system, logit.(init), classes)
+    solver = solve(prob, NewtonRaphson(); kwargs...)
+    logistic.(solver.u), solver
+end
+

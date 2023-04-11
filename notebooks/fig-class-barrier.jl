@@ -1,4 +1,36 @@
+using MultilocusIsland
+using Plots, PlotThemes, Printf, ColorSchemes; theme(:hokusai)
+cs = ColorSchemes.viridis
 
+s = 0.02
+l = 15
+h = [zeros(l); fill(0.5,l); ones(l)]
+L = length(h)
+τ = 1.
+N = 5000
+k = 5
+u = s*0.005
+m = 0.01
+
+A1 = Architecture([HapDipLocus(-s*(1-τ), -s*h[i]*τ, -s*τ) for i=1:L], fill(0.5, L)) 
+A2 = Architecture([HapDipLocus(-s*(1-τ), -s*τ, -s*τ)      for i=1:L], fill(0.5, L)) 
+A3 = Architecture([HapDipLocus(-s*(1-τ), -s*τ*0.5, -s*τ)  for i=1:L], fill(0.5, L)) 
+A4 = Architecture([HapDipLocus(-s*(1-τ), 0., -s*τ)        for i=1:L], fill(0.5, L)) 
+    
+mss = 0:0.005:1
+ps = map(mss) do ms
+    xs = map(zip([A1,A2,A3,A4], [3,1,1,1])) do (A,k)
+        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=u)
+        fixedpointit(M, ones(k))[end,:,1]
+    end |> x->vcat(x...)
+end |> x->hcat(x...) |> permutedims 
+plot( mss, ps[:,1:3])
+plot!(mss, ps[:,4:6], color=[1 2 3], ls=:dot)
+
+
+
+# OLD
+# -----------
 using ThreadTools, Printf, Plots, PlotThemes, Serialization, MCMCChains
 using Base.Iterators, Parameters, Random, StatsBase, MultilocusIsland
 using ColorSchemes, Distributions, DataFrames, CSV

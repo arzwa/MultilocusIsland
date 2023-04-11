@@ -23,6 +23,7 @@ using ProgressMeter
 using Roots, ForwardDiff # for deterministic bifurcation analysis
 import Random: default_rng
 import StatsBase: sample
+import NonlinearSolve: solve
 # these logit/logistic behave better for extreme arguments
 
 include("model.jl")
@@ -30,6 +31,7 @@ export HapDipMainlandIsland, HapMainlandIsland, Architecture, sfs, harmonicmean
 export HapDipLocus, HapLocus, DipLocus
 
 include("ibm.jl")
+include("finisland.jl")
 export simulate
 
 include("sampler.jl")
@@ -40,6 +42,6 @@ include("impliciteq.jl")
 export expectedq, expectedsfs, fixedpointit
 
 include("bifurcation.jl")
-export findroots_ms
+export findroots_ms, solve
 
 end # module MultilocusIsland

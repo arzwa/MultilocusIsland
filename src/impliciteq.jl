@@ -6,6 +6,150 @@
 # We also need to compute 𝔼[pq] (i.e. expected heterozygosity) under Wright's
 # distribution.
 
+# The gene flow factor at a single locus of a particular class due to the other
+# loci of the same and other classes.
+function _gff(xs, w, L, j)
+    g = 0.
+    for i=1:length(xs)
+        g += i == j ? (w[i]-1) * xs[i] : w[i] * xs[i]
+    end
+    return exp(2g)
+end
+
+# Gather all parameters for the single-locus Wright distribution models
+# assocaietd with each class of loci. This also involves computing the
+# effective migration rates for all classes of loci.
+function classparams(M, classes, p)
+    @unpack m, u = M
+    @unpack m, loci, K, L, γ, y = classes
+    xs = map(zip(p, loci, γ, y)) do (pj, lj, wj, yj)
+        @unpack s1, s01, s11 = lj
+        aj = s1 + s01 + (s11 - 2s01)*(1-pj) 
+        (yj-(1-pj))*aj
+    end
+    map(1:K) do j
+        @unpack s1, s01, s11 = loci[j]
+        g = _gff(xs, γ, L, j)
+        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
+    end
+end
+
+# with heterozygosity
+function classparams(M, classes, p, pq)
+    @unpack m, u = M
+    @unpack m, loci, K, L, γ, y = classes
+    xs = map(zip(p, pq, loci, γ, y)) do (pj, pqj, lj, wj, yj)
+        @unpack s1, s01, s11 = lj
+        # exp(2L[sa(qₘ - Eq) + sb(E[pq] - pₘEq)])
+        sa = s1 + s01 
+        sb = s11 - 2s01
+        qj = 1-pj
+        sa*(yj - qj) + sb*(pqj - (1-yj)*qj) 
+    end
+    map(1:K) do j
+        @unpack s1, s01, s11 = loci[j]
+        g = _gff(xs, γ, L, j)
+        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
+    end
+end
+
+# sum of square residuals
+ssr(x) = sum(x .^ 2)
+
+# Compute the expected SFS for each class of loci conditioning on the gff being
+# at its expected value? I think this is what's in Himani's fig 1C is?
+function expectedsfs(M, q, pq; step=0.05, f=identity, kwargs...)
+    classes = summarize_arch(M)
+    θ = classparams(M, classes, q, pq)
+    x = (step/2):step:(1-step/2)
+    map(1:length(θ)) do j
+        Z = Zfun(θ[j]; kwargs...)  # normalizing constant
+        y = reverse(map(x->Zxfun(θ[j], x, x+step; kwargs...)/Z, 0:step:1-step))
+        x, f.(y)
+    end
+end
+
+expectedsfs(M, Q::Array{T,3}; kwargs...) where T =
+    expectedsfs(M, Q[end,:,1], Q[end,:,2]; kwargs...)
+
+# with E[pq]
+function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
+    criterion = false
+    classes = summarize_arch(M)
+    θ   = classparams(M, classes, p)
+    pq  = [Epqfun(θ[j]; kwargs...) for j=1:length(θ)]
+    ps  = [p]
+    pqs = [pq]
+    while !criterion
+        θ = classparams(M, classes, ps[end], pqs[end])
+        Ep  = similar(p)
+        Epq = similar(pq)
+        for j=1:length(θ)
+            Ep[j]  = Epfun( θ[j]; kwargs...)
+            Epq[j] = Epqfun(θ[j]; kwargs...)
+        end
+        ϵ = Ep .- ps[end]
+        push!(ps, Ep)
+        push!(pqs, Epq)
+        criterion = ssr(ϵ) < tol 
+    end
+    _ps  = permutedims(hcat(ps...))
+    _pqs = permutedims(hcat(pqs...))
+    return cat(_ps, _pqs, dims=3)
+end
+
+
+# Fixed point iteration with an arbitrary linkage map
+function _gff(A::Architecture, p, pq, y, j)
+    @unpack loci, rrate = A
+    rs = rrates(rrate, j)
+    x = 0.
+    for i=1:length(p)
+        i == j && continue
+        @unpack s1, s01, s11 = loci[i]
+        sa = s1 + s01
+        sb = s11 - 2s01
+        qi = 1 - p[i]
+        x += (sa*(y[i] - qi) + sb*(pq[i] - (1-y[i])*qi)) / rs[i] 
+    end
+    return exp(x)  # XXX factor 2 disappears here with linkage -> in the rᵢ
+end
+
+function locusparams(M, p, pq)
+    @unpack m, u, y = M
+    map(1:length(M.arch)) do i
+        @unpack s1, s01, s11 = M.arch[i]
+        g = _gff(M.arch, p, pq, y, i)
+        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[i])
+    end
+end
+
+function fixedpointit_linkage(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
+    criterion = false
+    θ   = locusparams(M, p, p .* (1 .- p))
+    pq  = [Epqfun(θ[j]; kwargs...) for j=1:length(θ)]
+    ps  = [p]
+    pqs = [pq]
+    while !criterion
+        θ   = locusparams(M, ps[end], pqs[end])
+        Ep  = similar(p)
+        Epq = similar(pq)
+        for j=1:length(θ)
+            Ep[j]  = Epfun( θ[j]; kwargs...)
+            Epq[j] = Epqfun(θ[j]; kwargs...)
+        end
+        ϵ = Ep .- ps[end]
+        push!(ps, Ep)
+        push!(pqs, Epq)
+        criterion = ssr(ϵ) < tol 
+    end
+    _ps  = permutedims(hcat(ps...))
+    _pqs = permutedims(hcat(pqs...))
+    return cat(_ps, _pqs, dims=3)
+end
+
+
+
 # The exponent of p and (1-p) resp. in Wright's distribution, +1
 Afun(N, u, m, pm) = 2N*(u + m*pm)
 Bfun(N, u, m, pm) = 2N*(u + m*(1-pm))
@@ -111,153 +255,4 @@ end
 
 # Expected value
 Epfun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
-
-# The gene flow factor at a single locus of a particular class due to the other
-# loci of the same and other classes.
-function _gff(xs, w, L, j)
-    g = 0.
-    for i=1:length(xs)
-        g += i == j ? (w[i]-1) * xs[i] : w[i] * xs[i]
-    end
-    return exp(2g)
-end
-
-# Gather all parameters for the single-locus Wright distribution models
-# assocaietd with each class of loci. This also involves computing the
-# effective migration rates for all classes of loci.
-function classparams(M, classes, p)
-    @unpack m, u = M
-    @unpack m, loci, K, L, γ, y = classes
-    xs = map(zip(p, loci, γ, y)) do (pj, lj, wj, yj)
-        @unpack s1, s01, s11 = lj
-        aj = s1 + s01 + (s11 - 2s01)*(1-pj) 
-        (yj-(1-pj))*aj
-    end
-    map(1:K) do j
-        @unpack s1, s01, s11 = loci[j]
-        g = _gff(xs, γ, L, j)
-        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
-    end
-end
-
-# with heterozygosity
-function classparams(M, classes, p, pq)
-    @unpack m, u = M
-    @unpack m, loci, K, L, γ, y = classes
-    xs = map(zip(p, pq, loci, γ, y)) do (pj, pqj, lj, wj, yj)
-        @unpack s1, s01, s11 = lj
-        # exp(2L[sa(qₘ - Eq) + sb(E[pq] - pₘEq)])
-        sa = s1 + s01 
-        sb = s11 - 2s01
-        qj = 1-pj
-        sa*(yj - qj) + sb*(pqj - (1-yj)*qj) 
-    end
-    map(1:K) do j
-        @unpack s1, s01, s11 = loci[j]
-        g = _gff(xs, γ, L, j)
-        (sa=s1+s01, sb=s11-2s01, N=getNe(M), m=m*g, u=u, pm=1-y[j])
-    end
-end
-
-function expectedq(M::MainlandIslandModel, init::Real; kwargs...)
-    sol, solver = _expectedq(M, init; kwargs...)
-    return sol
-end
-
-# sum of square residuals
-ssr(x) = sum(x .^ 2)
-
-# get the best from a number initial conditions
-# we assume the same initial frequency for all loci in the barrier BTW
-function expectedq(M::MainlandIslandModel, init::AbstractVector; kwargs...)
-    thesol, thesolver = _expectedq(M, init[1]; kwargs...)
-    for i=2:length(init)
-        sol, solver = _expectedq(M, init[i]; kwargs...)
-        better = ssr(solver.resid) < ssr(thesolver.resid)
-        thesol = better ? sol : thesol
-    end
-    return thesol
-end
-
-function _expectedq(M::MainlandIslandModel, init::Real; kwargs...)
-    classes = summarize_arch(M)
-    function tosolve(lp, x) 
-        # solve on ℝ, transform back and forth to [0,1] (otherwise the
-        # integrals get messed up)
-        p = logistic.(lp)
-        M, classes = x
-        θ = classparams(M, classes, p)
-        Ep = similar(p)
-        for j=1:length(θ)
-            Ep[j] = Epfun(θ[j]; kwargs...)
-        end
-        return logit.(Ep) - lp
-    end
-    p0 = fill(init, length(classes.loci))
-    prob = NonlinearProblem{false}(tosolve, logit.(p0), (M, classes))
-    solver = solve(prob, NewtonRaphson())
-    return 1 .- logistic.(solver.u), solver
-    # here as well we report `q` i.e. the frequency of the derived allele on
-    # the island.
-end
-
-# Compute the expected SFS for each class of loci conditioning on the gff being
-# at its expected value? I think this is what's in Himani's fig 1C is?
-function expectedsfs(M, q; step=0.05, f=identity, kwargs...)
-    classes = summarize_arch(M)
-    θ = classparams(M, classes, 1 .- q)
-    x = (step/2):step:(1-step/2)
-    map(1:length(θ)) do j
-        Z = Zfun(θ[j]; kwargs...)  # normalizing constant
-        y = reverse(map(x->Zxfun(θ[j], x, x+step; kwargs...)/Z, 0:step:1-step))
-        x, f.(y)
-    end
-end
-
-# simple fixed point iteration
-function _fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
-    criterion = false
-    classes = summarize_arch(M)
-    θ  = classparams(M, classes, p)
-    ps = [p]
-    while !criterion
-        θ = classparams(M, classes, ps[end])
-        Ep = similar(p)
-        for j=1:length(θ)
-            Ep[j] = Epfun(θ[j]; kwargs...)
-        end
-        ϵ = Ep .- ps[end]
-        push!(ps, Ep)
-        criterion = ssr(ϵ) < tol 
-    end
-    return 1 .- permutedims(hcat(ps...))
-end
-
-# with E[pq]
-function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwargs...)
-    criterion = false
-    classes = summarize_arch(M)
-    θ   = classparams(M, classes, p)
-    pq  = [Epqfun(θ[j]; kwargs...) for j=1:length(θ)]
-    ps  = [p]
-    pqs = [pq]
-    while !criterion
-        θ = classparams(M, classes, ps[end], pqs[end])
-        Ep  = similar(p)
-        Epq = similar(pq)
-        for j=1:length(θ)
-            Ep[j]  = Epfun( θ[j]; kwargs...)
-            Epq[j] = Epqfun(θ[j]; kwargs...)
-        end
-        ϵ = Ep .- ps[end]
-        push!(ps, Ep)
-        push!(pqs, Epq)
-        criterion = ssr(ϵ) < tol 
-    end
-    _ps  = 1 .- permutedims(hcat(ps...))
-    _pqs = permutedims(hcat(pqs...))
-    return cat(_ps, _pqs, dims=3)
-end
-
-
 

@@ -1,4 +1,4 @@
-using Random, MultilocusIsland
+using Random, MultilocusIsland, StatsBase
 using Plots, PlotThemes; theme(:hokusai)
 
 N  = 200
@@ -9,27 +9,27 @@ s  = 4/Ne
 h  = 0.8
 τ  = 0.1
 
-mss = 0:0.1:1
-rs = [0.01, 0.05, 0.1, 0.25, 0.5]
+mss = 0.1:0.1:0.9
+#rs = [0.01, 0.05, 0.1, 0.25, 0.5]
+rs = [0.05, 0.2]
 results = map(rs) do r
     p = map(mss) do ms
         @info ms, r
         A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(r, L)) 
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=s*0.005)
-        _, P = simulate(M, 11000)
-        mean(P[1001:end,:])
+        _, P = simulate(M, 110000, drop=10000, thin=2)
+        mean(P)
     end
     (N=N, k=k, L=L, h=h, τ=τ, r=r, s=s, m=mss, p=p)
 end
 
-ker = BetaFlipProposal(0.5, 1.0, 0.1)
 smples = map(results) do x
     p = map(x.m) do ms
-        @info (x, ms)
         A = Architecture([HapDipLocus(-s*(1-τ), -s*h*τ, -s*τ) for i=1:L], fill(x.r, L)) 
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=s*0.005)
-        Q, _ = gibbs(M, ker, rand(L), 10000+1000, drop=1000)
-        mean(Q)
+        #Q, _ = gibbs(M, GibbsSampler(L), rand(L), 10000+1000, drop=1000)
+        #mean(Q)
+        1 .- mean(MultilocusIsland.fixedpointit_linkage(M, ones(L))[end,:,1])
     end
 end
 
@@ -78,8 +78,10 @@ end
 plot()
 xmean = mean(xs)
 ymean = mean(ys)
-map(enumerate(1:4:4*3)) do (i,j)
-    plot!(mss, 1 .- getindex.(xmean, j), color=i, ms=3, markerstrokecolor=i,
+map(enumerate(1:length(xs))) do (i,j)
+    #plot!(mss, 1 .- getindex.(xmean, j), color=i, ms=3, markerstrokecolor=i,
+    #      marker=true)
+    plot!(mss, 1 .- map(mean, mean(xs)), color=i, ms=3, markerstrokecolor=i,
           marker=true)
     plot!(mss, 1 .- getindex.(ymean, j), color=i, ms=3, markerstrokecolor=i,
           marker=true, ls=:dot)

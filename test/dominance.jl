@@ -13,6 +13,8 @@ m = 0.01
 
 # Haplodiplontic model
 A = Architecture([HapDipLocus(-s*(1-τ), -s*h[i]*τ, -s*τ) for i=1:L], fill(0.5, L)) 
+    
+M = HapDipMainlandIsland(N=N, k=k, m=0.01, arch=A, u=u)
 
 ys = map(0:0.01:1) do ms
     M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=u)
