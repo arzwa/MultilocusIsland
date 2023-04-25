@@ -13,125 +13,90 @@ u = s*0.005
 m = 0.01
 
 A1 = Architecture([HapDipLocus(-s*(1-τ), -s*h[i]*τ, -s*τ) for i=1:L], fill(0.5, L)) 
-A2 = Architecture([HapDipLocus(-s*(1-τ), -s*τ, -s*τ)      for i=1:L], fill(0.5, L)) 
+A2 = Architecture([HapDipLocus(-s*(1-τ), 0., -s*τ)      for i=1:L], fill(0.5, L)) 
 A3 = Architecture([HapDipLocus(-s*(1-τ), -s*τ*0.5, -s*τ)  for i=1:L], fill(0.5, L)) 
-A4 = Architecture([HapDipLocus(-s*(1-τ), 0., -s*τ)        for i=1:L], fill(0.5, L)) 
+A4 = Architecture([HapDipLocus(-s*(1-τ), -s*τ, -s*τ)        for i=1:L], fill(0.5, L)) 
     
 mss = 0:0.005:1
 ps = map(mss) do ms
-    xs = map(zip([A1,A2,A3,A4], [3,1,1,1])) do (A,k)
+    xs = map(zip([A1,A2,A3,A4], [3,1,1,1])) do (A,K)
         M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=u)
-        fixedpointit(M, ones(k))[end,:,1]
+        P,_ = fixedpointit(M, ones(K))
+        P[end,:,1]
     end |> x->vcat(x...)
 end |> x->hcat(x...) |> permutedims 
-plot( mss, ps[:,1:3])
-plot!(mss, ps[:,4:6], color=[1 2 3], ls=:dot)
+
+plot( mss, ps[:,1:3], label=["dominant" "codominant" "recessive"])
+plot!(mss, ps[:,4:6], color=[1 2 3], ls=:dot, label="")
+plot!(mss, mean(ps[:,1:3], dims=2), color=:black, lw=2, label="average")
+plot!(xlabel="\$m/s\$", ylabel="\$p\$")
+
+# large effect and a bunch of small effect loci
+ss = [fill(0.01, 35); fill(0.05, 5)] 
+A1 = Architecture([HapDipLocus(-s*(1-τ), -s*τ, -s*τ) for s in ss]) 
+
+mss = 0:0.005:1
+ps = map(mss) do ms
+    M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A1, u=u)
+    fixedpointit(M, ones(2))[end,:,1]
+end |> x->hcat(x...) |> permutedims 
+plot(ps)
 
 
+# a single recessive, a single dominant, and a bunch of additives
+Ls = 1.
+L  = 50
+s  = Ls/L
+Ns = 10.
+Ne = Ns/s
+k  = 5
+N  = _Ne2N(Ne, k) 
 
-# OLD
-# -----------
-using ThreadTools, Printf, Plots, PlotThemes, Serialization, MCMCChains
-using Base.Iterators, Parameters, Random, StatsBase, MultilocusIsland
-using ColorSchemes, Distributions, DataFrames, CSV
-theme(:hokusai)
-
-# Contrast recessive and dominant variants in the same barrier, for different
-# `Ls`.
-N   = 500
-k   = 5
-Ne  = harmonicmean(N, 2N*k)
-Nes = 10  # per locus
-s   = Nes/Ne
-mss = 0:0.05:1
-u   = s*0.005
-Ls  = [10, 20, 40, 80]
-τs  = [0.2, 0.8]
-n   = 5000      # Gibbs samples
-ker = BetaFlipProposal(0.2, 1.0, 0.1)
-
-df1 = tmap(Iterators.product(Ls, τs, mss)) do (L, τ, ms)
-    nrep = max(2, 40÷L)
-    map(1:nrep) do j
-        hs = [1., 0.]
-        A1 = [HapDipLocus(-s*(1-τ), -s*hs[1]*τ, -s*τ) for i=1:(L÷2)]
-        A2 = [HapDipLocus(-s*(1-τ), -s*hs[2]*τ, -s*τ) for i=1:(L÷2)]
-        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=[A1;A2])
-        Q, _ = gibbs(M, ker, rand(L), n+100, drop=100)
-        @info "(done) $L, $τ, $ms, $j"
-        (L=L, τ=τ, h=hs, ms=ms, rep=j, 
-         qs=vec(mean(Q, dims=1)), Q=cor(Q), 
-         s=s, Ne=Ne, u=u, a=a, b=b)
+P1s = map([1, 0]) do h
+    A  = Architecture(DipLocus(-0.5s, -s), L) 
+    push!(A, DipLocus(-s*h, -s), 0.5)
+    mss = 0:0.005:0.65
+    ps = map(mss) do ms
+        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A, u=s*0.005)
+        P,_ = fixedpointit(M, ones(2))
+        P[end,:,1]
+    end |> x->hcat(x...) |> permutedims 
+    lab = h == 0. ? "dominant" : (h == 1 ? "recessive" : "\$h = $h\$")
+    P1 = plot(mss, ps, color=[2 4], 
+              label=["codominant" lab], legend=:topright,
+              xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$", lw=2, 
+              title="\$N_es = $Ns, Ls=$Ls, L=$L\$")
+    ps2 = map(mss) do ms
+        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, arch=A[L+1:L+1], u=s*0.005)
+        P,_= fixedpointit(M, ones(1));
+        P[end,1,1]
     end
-end |> x->vcat(x...) |> DataFrame
-
-cs = ColorSchemes.Hokusai3
-ps = Dict(t=>plot(grid=false) for t in τs)
-xs = map(collect(groupby(df1, [:τ, :L]))) do sdf
-    t, L = sdf[1,:τ], sdf[1,:L]
-    c = get(cs, (L-minimum(Ls))/(maximum(Ls)-minimum(Ls)))
-    xdf = combine(groupby(sdf, :ms), :qs=>ByRow(x->mean(x[1:L÷2])))
-    plot!(ps[t], xdf[:,:ms], 1 .- xdf[:,2], color=c,
-#          marker=true, markerstrokecolor=c, ms=2,
-          label="\$L=$L\$")
-    xdf = combine(groupby(sdf, :ms), :qs=>ByRow(x->mean(x[(L÷2)+1:end])))
-    plot!(ps[t], xdf[:,:ms], 1 .- xdf[:,2], ls=:dot, color=c,
- #         marker=true, markerstrokecolor=c, ms=2,
-          label="")
+    plot!(P1, mss, ps2, color=4, label="single locus", ls=:dash)
 end
-map(t->annotate!(ps[t], (0, 0.1, text("\$\\tau = $t\$", 7, :left))), τs)
-xlabel!(ps[τs[end]], "\$m/s\$")
-title!(ps[τs[1]], "\$N_es = $Nes, s=$(@sprintf "%.3f" s), \\alpha=$a, \\beta=$b\$", titlefont=8)
-plot!([ps[t] for t in τs]..., layout=(3,1), size=(250,410), margin=0.2Plots.mm, 
-      legend=:outertopright, legendfont=7, ylabel="\$\\mathbb{E}[p]\$")
-plot(values(ps)..., size=(600,200))
 
-# But this is not terribly interesting. More interesting would seem to contrast
-# a barrier which consists mostly of haploidly selected loci (a proportion `1-τ`)
-# and `τ` diploidly selected loci: how de the diploid loci behave? Does
-# dominance matter at all? We could also add a third class of loci, that are
-# both haploidly and diploidly selected.
-
-# Let us consider the following: L/2 haploidly selected loci with strength `s`.
-# L/2 diploidly selected loci with dominant local adaptation (`h=0`) and the
-# same selection coefficient. This is the (s,h,t)-model with t∈[0,1] and h=0
-N   = 1000
-k   = 5
-Ne  = harmonicmean(N, 2N*k)
-Nes = 20  # per locus
-s   = Nes/Ne
-mss = 0:0.05:1
-u   = s*0.005
-Ls  = [2, 10, 20, 40, 80, 160]
-n   = 5000      # Gibbs samples
-ker = BetaFlipProposal(0.2, 1.0, 0.1)
-
-df2 = tmap(Iterators.product(Ls, mss)) do (L, ms)
-    nrep = max(2, 40÷L)
-    map(1:nrep) do j
-        h  = 1.0
-        A1 = [HapDipLocus(-s, 0., 0.) for i=1:(L÷2)]
-        A2 = [HapDipLocus(0., -h*s, -s) for i=1:(L÷2)]
-        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=[A1;A2])
-        Q, _ = gibbs(M, ker, rand(L), n+100, drop=100)
-        @info "(done) $L, $ms, $j"
-        qm = vec(mean(Q, dims=1))
-        qc = cor(Q)
-        (L=L, h=h, ms=ms, rep=j, qs=qm, Q=qc, s=s, Ne=Ne, u=u)
-    end
-end |> x->vcat(x...) |> DataFrame
-
-
-cs = ColorSchemes.Hokusai3
-PP = plot()
-xs = map(collect(groupby(df1, :L))) do sdf
-    L = sdf[1,:L]
-    c = get(cs, (L-minimum(Ls))/(maximum(Ls)-minimum(Ls)))
-    xdf = combine(groupby(sdf, :ms), 
-                  :qs=>ByRow(x->mean(x[1:L÷2])) => :q1,
-                  :qs=>ByRow(x->mean(x[(L÷2)+1:end])) => :q2)
-    xxdf = combine(groupby(xdf, :ms), :q1=>mean, :q2=>mean)
-    plot!(PP, xxdf[:,:ms], 1 .- xxdf[:,:q1_mean], color=c, lw=2, label="\$L=$L\$")
-    plot!(PP, xxdf[:,:ms], 1 .- xxdf[:,:q2_mean], color=c, lw=2, ls=:dash, alpha=0.7, label="")
+P2s = map([1, 0]) do h
+    lab = h == 0. ? "dominant" : (h == 1 ? "recessive" : "\$h = $h\$")
+    A  = Architecture(DipLocus(-0.5s, -s), L) 
+    push!(A, DipLocus(-s*h, -s), 0.5)
+    sm = 5
+    m = s/sm
+    M = HapDipMainlandIsland(N=N, k=k, m=m, arch=A, u=s*0.005)
+    P,_= fixedpointit(M, ones(2));
+    p  = P[end,:,1]
+    pq = P[end,:,2]
+    ys = expectedsfs(M, p, pq, step=0.005, f=log10)
+    M = HapDipMainlandIsland(N=N, k=k, m=m, arch=A[L+1:L+1], u=s*0.005)
+    P,_= fixedpointit(M, ones(1));
+    p  = P[end,:,1]
+    pq = P[end,:,2]
+    ys2 = expectedsfs(M, p, pq, step=0.005, f=log10)
+    P2 = plot(ys[2], color=:black, lw=2, label="multilocus", title="\$s = $(sm)m\$, $lab")
+    plot!(ys2, color=:black, alpha=0.4, lw=2, label="single locus", xlabel="\$p\$",
+          ylabel="\$\\log_{10}\\phi(p)\$",
+          size=(300,250), legend=:bottomright)
 end
-plot(PP, size=(400,250), xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$")
+
+plot(P1s[1], P2s[1], size=(500,200), margin=3Plots.mm)
+plot(P1s[2], P2s[2], size=(500,200), margin=3Plots.mm)
+
+

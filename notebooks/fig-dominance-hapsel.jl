@@ -4,84 +4,76 @@ theme(:hokusai)
 
 # Get simulation results for different dominance coefficients (`hs`) and strength
 # of haploid selection (`ts`) in a parameter regime where LD matters (`Ls ~ 1`)
-N = 200
-k = 5
-Ne = 1/(1/N + 1/(2N*k))
+Ls = 0.8
+L  = 40
+s  = Ls/L
+Ns = 8.
+k  = 5
+N  = Ne2N(Ns/s, k)
 hs = [0.0, 0.5, 1.0]
 ts = 0:0.25:1
-L  = 40 
-Ns = 4.  
-Ls = Ns*L/Ne
-mss1 = 0:0.1:1.0
-mss2 = 0:0.05:1.0
-mss3 = 0:0.01:1.0
-
-# Gibbs sampler settings, for this problem these seem to be enough to get
-# decent ESS
-n = 5000
-GS(L) = GibbsSampler([UnitIntervalProposal() for i=1:L])
+u  = s*0.01
+mss1 = 0.1:0.1:1.1
+mss3 = 0:0.005:1.1
 
 # do simulations
 Xs = map(hs) do h
     res = map(ts) do t
         @info (t, h)
-        s = Ns/Ne
-        u = s*0.01
         arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
         # individual-based
+        n = 21000
         X = tmap(mss1) do ms
             M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            _, Q1  = simulate(M, 11000, drop=1000, thin=10) 
+            _, Q1  = simulate(M, n, drop=11000, thin=2) 
             q1 = mean(Q1)
             (ms, q1)
         end
-        # Gibbs
-        Y = tmap(mss2) do ms
-            M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            Q2 = gibbs(M, GS(L), rand(length(arch)), n+500, drop=500)
-            q2 = mean(Q2)
-            ss = vec(ess(Chains(Q2))[:,2]) 
-            (ms, q2, Q2, ss)
-        end
-        # quadrature
+        (t, h, X)
+    end
+    vcat(res...)
+end |> x->vcat(x...)
+
+Zs = map(hs) do h
+    res = map(ts) do t
+        @info (t, h)
+        arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
         Z = tmap(mss3) do ms
             M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            q3 = fixedpointit(M, [0.0])[end,1,1]
+            P,_ = fixedpointit(M, [1.0])
+            q3 = P[end,1,1]
             (ms, q3)
         end
-        (t, X, Y, Z)
+        (t, h, Z)
     end
-    (h, res)
-end
+    vcat(res...)
+end |> x->vcat(x...)
 
 # Save the simulations
 serialize("data/dominance-haploidsel.jls", Xs)
 
 # Make a plots
-map(enumerate(Xs)) do (j,(h, Y))
-    P = plot()
-    map(enumerate(Y)) do (i,(t, X, Y, Z))
-        c = i
-        Z = Ys[j][2][i][2]
-        plot!(first.(Z), 1 .- last.(Z), 
-              color=c, title="\$h=$h\$",#, L=$L, N_es=$Ns\$", 
-              label="",lw=2.5, alpha=0.3)
-        gs = map(getindex.(Y, 3)) do xg
-        end
-        plot!(first.(Y), 1 .- getindex.(Y,2), 
-              ls=:dot, color=c, label="")
-        scatter!(first.(X), 1 .- getindex.(X, 2),
-                 label="\$\\tau=$(@sprintf "%.2f" t)\$",
-                 color=c, markerstrokecolor=c,
-                 xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$")
-    end 
-    P
-end |> x->plot(x..., grid=false, ms=3, ylim=(0,1), xlim=(0,1.05), 
-               margin=3Plots.mm, layout=(1,3), legend=:topright,
-              size=(700,200), legendfont=6)
+dd = Dict(h=>plot() for h=hs)
+cd = Dict(t=>i for (i,t) in enumerate(ts))
+for i=1:length(Zs)
+    t, h, Z = Zs[i]
+    P = dd[h]
+    c = cd[t]
+    plot!(P, first.(Z), last.(Z), 
+          color=c, title="\$h=$h\$",#, L=$L, N_es=$Ns\$", 
+          label="",lw=2.5, alpha=0.3)
+    t, h, X = Xs[i]
+    scatter!(P, first.(X), 1 .- getindex.(X, 2),
+             label="\$\\tau=$(@sprintf "%.2f" t)\$",
+             color=c, markerstrokecolor=c,
+             xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$")
+end
+plot(values(dd)..., grid=false, ms=3, ylim=(0,1), xlim=(0,1.25),
+     margin=3Plots.mm, layout=(1,3), legend=:topright, size=(700,200),
+     legendfont=6)
 
 #savefig("img/domtauL40Nes4.pdf")
-savefig("/home/arthur_z/vimwiki/build/img/2023-03-30/domtau.svg")
+savefig("$pth/domtau.svg")
 
 
 # fixed point iteration starting from no differentiation

@@ -39,9 +39,12 @@ include("proposal.jl")
 export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, UnitIntervalProposal
 
 include("impliciteq.jl")
-export expectedq, expectedsfs, fixedpointit
+export expectedq, expectedsfs, fixedpointit, summarize_arch
 
 include("bifurcation.jl")
 export findroots_ms, solve
+
+_Ne2N(Ne, k) = ceil(Int, Ne/(2k) + Ne)
+export _Ne2N
 
 end # module MultilocusIsland

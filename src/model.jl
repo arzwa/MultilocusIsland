@@ -46,7 +46,8 @@ Architecture(locus::HapDipLocus, L::Int) = Architecture([locus for i=1:L], fill(
 
 Base.length(A::Architecture) = length(A.loci)
 Base.show(io::IO, A::Architecture) = write(io, "Architecture[L=$(length(A)) loci]")
-Base.getindex(A::Architecture, i)  = A.loci[i] 
+Base.getindex(A::Architecture, i::UnitRange)  = Architecture(A.loci[i], A.rrate[i]) 
+Base.getindex(A::Architecture, i::Int) = A.loci[i]
 
 function Base.vcat(A1::Architecture, A2::Architecture)
     Architecture(vcat(A1.loci, A2.loci), vcat(A1.rrate, A2.rrate))
@@ -108,12 +109,15 @@ getNe(m::HapMainlandIsland) = m.N
 
 nloci(M::MainlandIslandModel) = length(M.arch)
 
-function sfs(ps; step=0.02, f=identity)
+function sfs(ps; step=0.02, f=identity, density=true)
     hs = fit(Histogram, ps, 0:step:1+step) 
     hs = StatsBase.normalize(hs, mode=:probability)
     es = collect(hs.edges)[1][2:end-1] .- step/2
     ws = hs.weights[1:end-1]    # make sure we add the fixed states to the last bin 
     ws[end] += hs.weights[end] 
+    if density
+        ws ./= step
+    end
     es, f.(ws)
 end
 

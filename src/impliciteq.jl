@@ -64,7 +64,7 @@ function expectedsfs(M, q, pq; step=0.05, f=identity, kwargs...)
     x = (step/2):step:(1-step/2)
     map(1:length(θ)) do j
         Z = Zfun(θ[j]; kwargs...)  # normalizing constant
-        y = reverse(map(x->Zxfun(θ[j], x, x+step; kwargs...)/Z, 0:step:1-step))
+        y = map(x->Zxfun(θ[j], x, x+step; kwargs...)/(Z*step), 0:step:1-step)
         x, f.(y)
     end
 end
@@ -95,9 +95,14 @@ function fixedpointit(M::MainlandIslandModel, p::AbstractVector; tol=1e-9, kwarg
     end
     _ps  = permutedims(hcat(ps...))
     _pqs = permutedims(hcat(pqs...))
-    return cat(_ps, _pqs, dims=3)
+    return cat(_ps, _pqs, dims=3), θ
 end
 
+# computes the gffs for each unique locus
+function gff(M, p, pq)
+    classes = summarize_arch(M)
+    θ = classparams(M, classes, p, pq)
+end
 
 # Fixed point iteration with an arbitrary linkage map
 function _gff(A::Architecture, p, pq, y, j)

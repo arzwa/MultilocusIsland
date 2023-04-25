@@ -22,7 +22,7 @@ decreasing the step adaptively until they collide.
 """
 function findroots_ms(sa, sb, L; ms0=0., stepsize=0.005, tol=1e-2, maxit=10000)
     s = -(sb + 2sa)  # this is the s scale
-	ms = 0.
+	ms = ms0
 	zs, ds = roots_stab(sa, sb, ms*s, L)
 	sol = [(ms, z, d) for (z, d) in zip(zs,ds)]
 	i = 0

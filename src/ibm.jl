@@ -3,12 +3,22 @@
 Genome{T}     = Vector{T} 
 Population{T} = Vector{Genome{T}}
 
+struct MainlandIslandPop{M,I}
+    mainland::M
+    island::Population{I}
+end
+
 function simulate(model, n; pinit=zeros(nloci(model)), drop=0, thin=1)
     simulate(default_rng(), model, n, pinit, drop, thin)
 end
 
-function simulate(rng, model, n, pinit, drop=0, thin=1)
+function simulate(rng, model, n, pinit::Vector{Float64}, drop=0, thin=1)
     pop = initialize_ibm(rng, model, pinit)
+    simulate(rng, model, n, pop, drop, thin) 
+end
+
+# from an initial population
+function simulate(rng, model, n, pop::MainlandIslandPop{T,V}, drop=0, thin=1) where {T,V}
     ps  = allelefreqs(pop.island)
     Ps  = Matrix{eltype(ps)}(undef, n, nloci(model))
     Ps[1,:] = ps
@@ -17,11 +27,6 @@ function simulate(rng, model, n, pinit, drop=0, thin=1)
         Ps[i,:] = allelefreqs(pop.island)
     end
     return pop, Ps[drop+1:thin:end,:]
-end
-
-struct MainlandIslandPop{M,I}
-    mainland::M
-    island::Population{I}
 end
 
 function initialize_ibm(rng::AbstractRNG, M::MainlandIslandModel, pinit)

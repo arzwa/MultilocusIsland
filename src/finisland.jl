@@ -4,7 +4,7 @@
 #   contribution to the pool. Directional migration according to a graph is
 #   rather tricky to implement...
 # - Selection is encoded by the genetic architecture in each local deme. 
-# - We assume a biallelic loci and symmetric and equal mutation rates.
+# - We assume biallelic loci and symmetric and equal mutation rates.
 
 abstract type Deme end
 
@@ -13,8 +13,8 @@ abstract type Deme end
     N ::Int
     k ::Int
     Ne::T = harmonicmean(N, 2N*k)
-    u ::T    # mutation rate
-    A ::U    # genetic architecture
+    u ::T  # mutation rate
+    A ::U  # genetic architecture
 end
 
 nloci(d::HapDipDeme) = length(d.A)
@@ -57,6 +57,7 @@ function initialize_island(rng::AbstractRNG, N, L, p0)
 end
 
 generation(model, pop) = generation(default_rng(), model, pop)
+
 function generation(
         rng  ::AbstractRNG, 
         model::FiniteIslandModel, 
@@ -67,13 +68,28 @@ function generation(
     # within deme updates
     pops_ = similar.(pops)
     for k=1:D
-        pops_[k] = generation(rng, model[k], pops[k])
+        pops_[k] = reproduction(rng, model[k], pops[k])
+    end
+    return pops_
+end
+
+function generation(
+        rng  ::AbstractRNG, 
+        model::FiniteIslandModel, 
+        pops ::Vector{Population{T}}) where T
+    D = ndeme(model)
+    # migration
+    pops = migration(rng, pops, model.M)
+    # within deme updates
+    pops_ = similar.(pops)
+    for k=1:D
+        pops_[k] = reproduction(rng, model[k], pops[k])
     end
     return pops_
 end
 
 # This should be shared with mainland-island model.
-function generation(
+function reproduction(
         rng  ::AbstractRNG, 
         model::HapDipDeme, 
         pop  ::Population{T}) where T

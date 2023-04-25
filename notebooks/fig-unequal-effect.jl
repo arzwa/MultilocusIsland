@@ -1,4 +1,3 @@
-
 using ThreadTools, Printf, Plots, PlotThemes, Serialization, MCMCChains
 using Base.Iterators, Parameters, Random, StatsBase, MultilocusIsland
 using ColorSchemes, Distributions, DataFrames, CSV
@@ -131,4 +130,5 @@ plot!(P1, mss, getindex.(Xs, 5), color=:blue, label="", legend=:topright)
 P2 = stephist(hs, bins=0:0.1:1, color=:black, legend=false, ylabel="frequency",
               xlabel="\$h\$", normalize=:probability)
 plot(P1, P2, size=(500,200))
+
 
