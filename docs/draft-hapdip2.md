@@ -171,7 +171,7 @@ heterogeneous selective effects.
 
 # Model and Methods
 
-## Haplodiplontic mainland-island model
+## Haplodiplontic mainland-island model {#sec:model}
 
 Here we outline a mainland-island model for a sexual population which may be
 subject to selection in both the haploid and diploid phases.
@@ -188,10 +188,15 @@ The $Nk$ diploids produce in turn an effectively infinite pool of haploid
 spores through meiosis, of which $N$ are drawn to form the next haploid
 generation.
 In each generation, we assume $M$ haploid individuals on the island are
-replaced by haploid individuals from a fixed mainland population, where $M$ is
+replaced by haploid individuals from a mainland population, where $M$ is
 Poisson distributed with mean $Nm$.
+The mainland population is assumed to have a constant, but arbitrary, genetic
+composition.
+Unless stated otherwise, we shall assume the mainland to be fixed for the
+locally deleterious allele on the island.
 Fitness on the island is determined by $L$ unlinked biallelic loci which are
 under divergent selection relative to the mainland.
+Fitness effects are allowed to vary arbitrarily across loci.
 Denoting the alleles at locus $i$ by $A_{i,0}$ and $A_{i,1}$, we designate by
 $w_{i,j}$ the relative fitness of the haploid genotype $A_{i,j}$ and $w_{i,jk}$ the
 relative fitness of diploid genotype $A_{i,j}A_{i,k}$.
@@ -199,52 +204,38 @@ We suppress the index $i$ when considering a generic locus.
 We assume throughout that $w_0 = 1$ and $w_1 = e^{s_1}$ for the haploid phase,
 and $w_{00} = 1, w_{01} = w_{10} = e^{s_{01}}$, and $w_{11} = e^{s_{11}}$ for
 the diploid phase.
+Throughout, we denote the frequency of the allele with relative fitness $1$ at
+locus $i$ by $p_i$, and the frequency of the alternative allele by $q_i =
+1-p_i$.
 Fitness is determined multiplicatively across loci, so that, for instance, the
 log relative fitness of a haploid individual fixed for all the '1' alleles
 (genotype $A_{1,1},A_{2,1}, \dots, A_{L,1}$) is given by $\log w = \sum_{i=1}^L s_{i,1}$.
 We assume that each haploid (diploid) individual contributes gametes (spores)
 to the gamete (spore) pool proportional to its fitness.
+We assume symmetric mutation at a small constant rate $u$ per locus, occurring
+at meiosis.
+
 Individual-based simulations of this model are implemented in Julia [@julia]
 and the code is available at \hl{GitHub}.
-In the following sections, we shall consider theoretical approximations to this
-fairly general model.
-
+In the following sections, we build up a theoretical approximation to this
+fairly general multilocus model, roughly as in @sachdeva2022.
+We first derive the dynamics at a single locus, considering both deterministic
+and stochastic models.
+Next, we derive an approximation to the effective migration rate in the
+multilocus system using a rather general argument based on the reproductive
+value of migrant individuals.
+Lastly, we approximate the allele frequency dynamics of the multilocus model by
+plugging in the effective migration rate, which captures the effect of LD among
+selected alleles on the dynamics at a neutral locus, in the single locus
+theory.
 
 ## Single locus mainland-island model
 
-### Deterministic model
+### Deterministic dynamics {#sec:sldet}
 
-Here we outline a deterministic model for allele frequencies at a single locus
-in a general sexual population which undergoes selection in both the haploid
-and diploid phases. We shall assume that sexes need not be distinguished.
-Ignoring mutation and migration for now, the change in allele frequency of
-an allele $A$ througout the life cycle is assumed to take the form:
-\begin{align}
-  \underbrace{
-  p \underset{\text{haploid selection}}{\longrightarrow}
-  p^\ast \underset{\text{gametogenesis}}{\longrightarrow}
-  p^\ast }_{\text{haploid phase}} 
-  \underset{\text{syngamy}}{\longrightarrow}
-  \underbrace{p^\ast \underset{\text{diploid selection}}{\longrightarrow}
-  p' \underset{\text{meiosis}}
-  {\longrightarrow}}_{\text{diploid phase}} 
-  p',
-\end{align}
-Throughout, we shall confine our attention to biallelic loci, having a $0$ and
-a $1$ allele (e.g. $A_0$ and $A_1$ at locus $A$), and shall designate the
-frequency of the $0$ allele by $p$ and the $1$ allele by $q=1-p$.
-Without loss of generality we shall assume the relative fitnesses to be given
-by $1:1+s_1$ for the haploid stage, and $1:1+s_{01}:1+s_{11}$ for the diploid
-stage, where fitness is understood as the relative contribution of an
-individual to the subsequent phase.
-Generally, migration could take place at any stage in the life cycle, for
-instance right after meiosis (e.g. dispersal of meiospores in bryophytes and
-Fungi), at the end of the haploid phase (e.g. gamete dispersal in algae), early
-in the diploid phase (e.g. seed dispersal in spermatophytes) or at the level of
-adult diploids (e.g. migration in animals).
-We shall assume migration takes place right after meiosis, where a fraction $m$
-of the haploid population is replaced by migrants sampled from some mainland
-population where the frequency of $A_0$ is $p_M$.
+We first consider a deterministic model for the allele frequency dynamics at a
+single focal locus, ignoring the influence of the other loci as well as genetic
+drift. 
 As shown in detail in @sec:app1, for weak selection and migration, the
 dynamics of $p$ can be described in continuous time by the nonlinear ordinary
 differential equation (ODE)
@@ -261,38 +252,49 @@ decreases $p$.
 As expected, this is the same dynamical law as for a strictly diploid model, in
 which case $s_a = s_{01}$.
 This enables us to identify a pair of selection coefficients $s_{01}^\ast =
-s_1+s_{01}$ and $s_{11}^\ast = 2s_1 + s_{11}$, which allow us to describe a
-haplodiplontic system as a diploid one with some effective degree of dominance
-and an effective selection coefficient, when selection is sufficiently weak.
+s_1+s_{01}$ and $s_{11}^\ast = 2s_1 + s_{11}$.
+When $s_{11}^\ast \ne 0$, we can hence describe the haplodiplontic system as
+the familiar diploid model with some effective degree of dominance $h_e =
+s_{01}^\ast/s_{11}^\ast = \frac{s_1 + s_{01}}{2s_1 + s_{11}}$ and an effective
+selection coefficient $s_e = s_{11}^\ast = 2s_1 + s_{11}$, at least when
+selection is sufficiently weak so that allele frequencies do not change
+appreciably within any one alternation of generations.
 The equilibria of @eq:ode are analyzed in detail in @sec:mieq.
 
-### Wright-Fisher model and diffusion approximation
+### Diffusion approximation to the stochastic dynamics
 
-We adopt a Wright-Fisher-like model to account for genetic drift
-and use the diffusion approximation to obtain the allele frequency
-distribution on the island at population genetic equilibrium for the model
-outlined in the previous section.
-We consider a hermaphroditic haplodiplontic population which undergoes a
-regular alternation of generations, with a haploid generation consisting of $N$
-individuals producing on average $k$ diploid individuals each.
-We assume mainland-island migration at rate $m$ and bidirectional mutation at
-rate $u$ per generation. 
+Still considering a single focal locus, we now account for the effects of
+sampling drift.
 Denoting by $X_n$ the number of $A_1$ copies in the $n$th haploid generation,
 and by $Y_n^{(ij)}$ the number of $A_iA_j$ genotypes in the $n$th diploid 
-generation, we assume (ignoring migration and mutation for simplicity) the
-following Markov chain model
+generation, the life cycle as outlined in @sec:model entails the following
+Markov chain model:
   \begin{align}
   Y_n|X_n &\sim \HW\left(Nk, \frac{w_{h,1}}{\bar{w}_h}\frac{X_n}{N}\right)
-    \nonumber \\
+    \label{eq:mc1} \\
   X_{n+1}|Y_n &\sim \Bin\left(N, \frac{\bar{w}_{d,1}}{\bar{w}_d}
-    \left(\frac{Y^{(11)}_n + Y^{(01)}_n/2}{Nk}\right)\right)\ , \label{eq:mc}
+    \left(\frac{Y^{(11)}_n + Y^{(01)}_n/2}{Nk}\right)\right)\ , \label{eq:mc2}
   \end{align}
 where $w_{h,1}\ (\bar{w}_h)$ and $\bar{w}_{d,1}\ (\bar{w}_d)$ are the marginal
 fitnesses of the $A_1$ allele (mean fitnesses) in the haploid and
-diploid generation respectively. 
-$\HW(N,p)$ refers to the multinomial distribution with Hardy-Weinberg
-proportions at allele frequency $p$ for population size $N$.
-@Eq:mc is readily extended to allow for migration and mutation.
+diploid generation respectively, and where $\HW(N,p)$ refers to the multinomial
+distribution with Hardy-Weinberg proportions at allele frequency $p$ for
+population size $N$.
+Note that one unit of time corresponds to a single *alternation* of
+generations, involving two sampling stages: first we sample diploid genotypes
+from the random union of fitness-weighted haploid genotypes (@eq:mc1), next we
+sample haploid spores by randomly drawing gene copies from the diploid
+genotypes that survive diploid selection (@eq:mc2).
+This Markov chain model is readily extended to include mutation and migration.
+This model is akin to the standard Wright-Fisher (WF) model for a diploid
+or haploid population.
+Indeed, for the neutral case, it is easily seen that the model corresponds to a
+haploid WF model with variable population size, regularly alternating between
+$N$ and $2Nk$ gene copies.
+The corresponding effective population size is hence $N_e = (N^{-1} +
+(2Nk)^{-1})^{-1}$, twice the harmonic mean of the phase-specific number of gene
+copies [@hein2004] (twice because our unit of time is an alternation of
+generations, not a single generation). 
 
 When evolutionary forces are sufficiently weak, diffusion theory can be applied
 to approximate the equilibrium allele frequency distribution implied by the
@@ -307,10 +309,8 @@ variance will be, respectively,
   M(p) &= -q(s_ap + s_bpq) + u(q - p) - m(p - p_M) \\
   V(p) &= N_e^{-1} pq\ .
   \end{align*}
-The effective population size associated with a single alternation of
-generations is given by half the harmonic mean of the number of gene copies in
-each phase $N_e = (N^{-1} + (2Nk)^{-1})^{-1}$. This yields a probability
-density function for the equilibrium allele frequency distribution
+This yields a probability density function for the equilibrium allele frequency
+distribution
   \begin{equation}
   \phi(p; N_e, u, m, s) \propto p^{2N_e(u+mp_M)-1}q^{2N_e(u+mq_M)-1}e^{N_e(2s_aq + s_bq^2)},
   \end{equation}
@@ -322,36 +322,40 @@ haplodiplontic life cycle.
 
 ### Effective migration rate
 
-We extend the single locus theory to a model with $L$ unlinked loci which
-affect fitness multiplicatively.
-To do so, we derive an appropriate expression for the effective migration rate
-$m_e$, which captures the reduction in gene flow due to selection against
-migrant genotypes.
+To begin constructing a useful approximation to the allele frequency dynamics
+in the multilocus system, we derive an appropriate expression for the effective
+migration rate $m_e$, which captures the reduction in gene flow at a focal
+locus due to selection against migrant genotypes.
 As shown formally in @kobayashi2008, for weak migration, the reduction in gene
 flow relative to the 'raw' migration rate $m$, termed the *gene flow factor*
 (gff), depends on the expected reproductive value of migrants in the resident
 background.
-Let $W_{h,k}$ and $W_{d,k}$ denote the relative fitness of a $k$th generation
-haploid, respectively diploid, descendant from a migrant individual.
+At any time, the proportion of individuals with recent migrant ancestry on the
+island is $O(m)$, so that the probability of individuals with migrant
+backgrounds mating with each other to produce, for instance, F2 crosses of the
+migrant and resident genotypes, is $O(m^2)$, and hence negligable for
+sufficiently weak migration.
+Let $W_{h,k}$ and $W_{d,k}$ denote the relative fitness of an individual
+derived from a $k$th generation haploid, respectively diploid, backcross of an
+initial migrant individual with the resident population (i.e. $W_{d,1}$ is the
+relative fitness of an F1 diploid, $W_{d,2}$ of an offspring from a F1 $\times$
+resident cross (BC1 generation), *etc.*).
 Assuming migration occurs in the haploid phase before selection, the gff can be
 expressed as
 \begin{equation}
 g = \frac{m_e}{m} = \Ex[W_{h,0}\prod^\infty_{k=1} W_{d,k}W_{h,k}],
 \end{equation}
 where $W_{h,0}$ is the relative fitness of the haploid migrant in the resident
-population.
+population [@westram2018; @barton2018; @sachdeva2022].
 Note that this involves an expectation over all possible lines of descent of an
 initial migrant spore.
-In order to derive a useful approximate expression for $g$, we shall make a
-number of important assumptions:
-(1) both the mainland and island populations are in Hardy-Weinberg and linkage
-equilibrium;
-(2) migration is sufficiently weak, so that the mean fitness of the resident
-population is approximately constant and the probability of descendants from
-migrants crossing with each other is negligeable; 
-(3) selection among offspring of a $k$th generation migrant descendant $\times$
-resident cross is negligeable (i.e. we ignore selection on the variance
-generated by Mendelian segregation).
+In order to derive a useful approximate expression for $g$, we shall make two
+further important assumptions:
+(1) both the resident and migrant gene pools are are in Hardy-Weinberg and
+linkage equilibrium;
+(2) variation and selection among offspring of a $k$th generation migrant
+descendant $\times$ resident cross (i.e. segregation variance within F1s, BC1s,
+*etc.* and selection thereupon) is negligable.
 This last assumption becomes more plausible as local adaptation is due to
 more and more loci of smaller effect.
 
@@ -360,11 +364,13 @@ by the frequencies of the selected alleles in the mainland and the island
 populations at the assumed equilibrium.
 This allows us to determine $\Ex[q_{i,k}]$, the expected frequency of the
 locally deleterious allele at locus $i$ among $k$th generation descendants from
-a migrant, in terms of the allele frequencies in the maniland and island
-popualtion.
-Indeed, assumption (2) and (3) imply the recursive relation $\Ex[q_{i,k}] =
-\frac{1}{2}(\Ex[q_{i,k-1}] + \Ex[q_i])$, where $q_i$ is the allele frequency in
-the resident population.
+a migrant, in terms of the allele frequencies in the mainland and island
+population.
+Indeed, assumption (3) implies the recursive relation $q_{i,k} =
+\frac{1}{2}(q_{i,k-1} + q_i)$, where $q_i$ is the allele frequency in the
+resident population -- i.e. the average number of selected alleles carried
+by a $k$th generation backcross is the mean of the number of such alleles
+carried by a $k-1$th generation backcross and a resident individual.
 Hence, we have $\Ex[q_{i,k}] = \frac{1}{2^k}(q_{M,i} + (2^k - 1)\Ex[q_i])$,
 where $q_{M,i} = q_{0,i}$ is the mainland frequency.
 Denoting the selection coefficient at locus $i$ for the haploid phase by
@@ -404,17 +410,46 @@ g
     \label{eq:gff}
 \end{align}
 where, similarly, $s_{i,a} = s_{i1} + s_{i01}$.
+It is worth stressing that the gff is a function of the actual differentiation
+between the mainland and island population, and that although we assume
+migration is sufficiently rare, we do *not* assume that alleles of the type
+introduced by migrants are rare.
+We shall often highlight the dependence of the gff on the allele frequencies by
+writing $g[p]$. 
 If we assume all loci to have the same selection coefficients, and that the
 mainland is fixed for the locally deleterious allele on the island, the gff
 simplifies to
 \begin{equation}
   g = e^{2L(s_a \Ex[p] + s_b \Ex[pq])}
+  \label{eq:eqeff}
 \end{equation}
 where $\Ex[p]$ and $\Ex[pq]$ are the expected beneficial allele frequency and
 expected heterozygosity at any selected locus on the island.
 Note that in our applications $s_a < 0$, so that when the locally beneficial
 allele is common ($p \approx 1$) and $Ls_a$ is appreciable, gene flow will
 indeed be reduced due to selection against migrants. 
+
+To gain some intuition for this result, we can express @eq:eqeff in terms of
+the effective selection coefficient $s_e$ against the invading allele, and the
+effective dominance coefficient $h_e$ of the invading allele over the locally
+beneficial one, as
+\begin{equation}
+  g = e^{-2Ls_eh_e\Ex[p]}e^{-2Ls_e(1-2h_e)\Ex[pq]}
+  \label{eq:eqeff}
+\end{equation}
+(see @sec:sldet). Here, the first factor is just the gff associated with a
+haploid $L$-locus system with selection coefficients $s_eh_e$ [@sachdeva2022].
+The second factor captures the effects of dominance when heterozygosity is
+appreciable.
+Clearly, $h_e$ has opposing effects on both factors.
+The immediate effect of dominance is therefore that the gff is decreased
+(barrier strength increased) relative to the additive case whenever invading
+alleles exhibit a dominant deleterious effect on the island ($h_e > 1/2$).
+Only when heterozygosity ($\Ex[pq]$) becomes appreciable does the second factor
+contribute to the increase (when $h_e > 1/2$) or decrease (when $h_e < 1/2$) of
+the gff.
+The implications of these observations for the maintenance of adaptive
+differentiation will be explored in detail in the results section.
 
 Two remarks are due. Firstly, the gff as derived above yields the effective
 migration rate at an unlinked neutral locus.
@@ -425,9 +460,12 @@ the barrier, say locus $j$, the relevant gff is
     s_{i,a}(q_{M,i} - \Ex[q_i]) - s_{i,b}(p_{M,i}\Ex[q_i] - \Ex[p_iq_i])\right] 
     \label{eq:gff2}
 \end{equation}
-Secondly, we have assumed in the above that migration occurs at the start of
-the haploid phase, reflecting a process such as spore dispersal in bryophytes,
-pteridophytes or Fungi.
+where we have assumed that the gff at a selected locus is the same as that of a
+neutral locus at the same location -- an assumption which is only expected to
+work well if selection at the focal locus is sufficiently weak.
+Secondly, as in the model outlined in @sec:model, we have assumed that
+migration occurs at the start of the haploid phase, reflecting a process such
+as spore dispersal in bryophytes, pteridophytes or Fungi.
 However, it should be emphasized that, while the details of when migration
 occurs in the life cycle do not matter for the single locus model as long as
 selection and migration are sufficiently weak (so that the continuous-time
@@ -450,29 +488,23 @@ haploid spores, so that @eq:gff gives the relevant gff.
 
 ### Dynamics and equilibria for the multilocus model
 
-\begin{algorithm}[t]                                                                                      
-\caption{Fixed point iteration for calculating the expected allele frequency
-and expected heterozygosity on the island.}\label{alg:fp}
-\begin{algorithmic}[1]
-\Require Initialization $p^{(0)} = (p_1^{(0)}, \dots, p_L^{(0)})$, tolerance $\epsilon$
-\State $(pq)^{(0)} \leftarrow (p_1^{(0)}q_1^{(0)}, \dots, p_L^{(0)}q_L^{(0)})$
-\State $n \leftarrow 1, \Delta \leftarrow \infty$
-\While {$\Delta > \epsilon$}
-\For{$j=1,\dots,L$}
-\State $m_{e,j}^{(n)} \leftarrow \exp\left[ \sum_{i\ne j} s_{a,i} q_i^{(n-1)} + s_{b,i} (p_iq_i)^{(n-1)} \right]$
-\State $p_j^{(n)} \leftarrow \int_0^1 p \phi(p; N_e, u, m_{e,j}^{(n)},s_j) dp$
-\State $(p_jq_j)^{(n)} \leftarrow \int_0^1 p(1-p) \phi(p; N_e, u,
-m_{e,j}^{(n)},s_j) dp$
-\EndFor
-\State $\Delta \leftarrow \sum_j (p_j^{(n)} - p_j^{(n-1)})^2$
-\State $n \leftarrow n+1$
-\EndWhile
-\State \Return $p^{(n)}, (pq)^{(n)}$
-\end{algorithmic}
-\end{algorithm}
+The gff captures the effect of LD among selected loci on the rate of gene flow
+from the mainland into the island at any individual locus.
+The key observation is that a certain separation of time scales applies:
+although selection against migrant *genotypes* can be very strong in the
+polygenic case (of magnitude $Ls$, roughly), selection at any individual locus
+is still assumed to be weak, so that after an evolutionarily short period in
+which entire sets of alleles are efficiently removed together, LD among
+selected loci quickly becomes negligable and the standard single locus theory
+should be appliccable.
+Hence, on the longer time scales at which migration-selection balance is
+attained, the allele frequency dynamics at any individual locus should
+essentially follow the single locus dynamics, but where migrant alleles are
+introduced at a reduced rate [@sachdeva2022].
 
-We analyze the deterministic multilocus model implied by substituting $m_e$ for
-$m$ in @eq:ode.
+As a consequence, in the deterministic case, we expect that the effects of LD
+should be well captured by substituting the effective migration rate $m_e = mg$
+for $m$ in @eq:ode.
 Specifically, we get a system of $L$ coupled differential equations, where for
 $1 \le j \le L$,
 \begin{equation}
@@ -514,29 +546,8 @@ g_j[\Ex[p_{-j}]] &=
 \psi_j(p_j) &= e^{N_e(2s_{j,a}q_j + s_{b,j}q_j^2)},
 \end{align*}
 for $\Ex[p_j]$ and $\Ex[p_jq_j]$.
-To do so, we use the fixed point iteration outlined in algorithm
-\autoref{alg:fp}.
+To do so, we use the fixed point iteration outlined in @sec:fp.
 
-
-### Individual-based simulations
-
-To check the adequacy of our approximations, we compare our equilibrium
-predictions to individual-based simulations.
-We use the same life cycle model as the one outlined above @eq:mc, where we
-assume a regular alternation of generations with haploid and diploid population
-sizes of $N$ and $Nk$ respectively (in the absence of selection, each haploid
-produces on average $k$ diploids) where each individual in a haploid population
-of size $N$ contributes gametes to a diploid population of size $Nk$ with
-probability proportional to its fitness, and each diploid individual likewise
-contributes haploid meiospores proportional to its fitness.
-We think of this model as a caricature of a bryophyte, pteridophyte or Fungal
-population.
-Migration occurs at the haploid stage before selection by replacing a Poisson
-number of haploid individuals with mean $Nm$ and replacing them with
-individuals drawn from the mainland population, which is assumed to have a
-constant genetic composition.
-The individual-based simulations and numerical methods are implemented in
-Julia [@julia] and the code is available at \hl{GitHub}.
 
 # Results
 
@@ -576,8 +587,9 @@ effect of haploid selection is to pull $h_e$ towards the additive case
 
 In the homogeneous deterministic model, all loci have the same dynamics if the
 initial allele frequencies are equal.
-From @eq:odeme, we find that in that case, the allele frequency at any
-individual selected locus in an $L+1$ locus system must satisfy at equilibrium
+From @eq:odeme, we find that in that case, the frequency $p$ of the locally
+beneficial allele at any individual selected locus in an $L+1$ locus system
+must satisfy at equilibrium
 \begin{align}
    0 &= shpq + s(1-2h)pq^2 -mg[p]p 
    \label{eq:odeq} \\
@@ -586,18 +598,18 @@ individual selected locus in an $L+1$ locus system must satisfy at equilibrium
 We can solve this numerically for the equilibrium allele frequency.
 @Fig:detdom shows the equilibrium behavior for a number of example parameter
 sets.
-As expected, increasing the total strength of selection $Ls$ increases the
+As expected, increasing the total strength of selection ($Ls$) increases the
 equilibrium frequency of the locally beneficial allele with respect to the
 single locus prediction, but the magnitude of this effect depends quite
 strongly on dominance.
 In particular the effect is much more pronounced when local adaptation is due
 to recessive variants ($h=1$).
-In this case, the gff is at its minimum, and hence the effects of LD on
-migration-selection balance are strongest, when the deleterious allele is
+In this case, the gff is at its minimum, and hence the impact of LD on
+migration-selection balance is strongest, when the deleterious allele is
 rare (@fig:gff).
-On the other hand, when the invading alleles are recessive ($h=0$), the gff is
-1 when the deleterious allele is rare, and hence gene flow is not at all
-impeded.
+On the other hand, when the invading alleles are recessive ($h=0$), gene flow
+is not at all impeded when the deleterious allele is rare (the gff being near
+one).
 When $h<1/3$, the barrier strength, as measured by $g^{-1}$ [@barton1986],
 *increases* as the deleterious allele increases in frequency on the island,
 decreasing the rate of gene flow, until a value of $q=(3h-1)/(4h-2)$ is reached
@@ -835,9 +847,11 @@ simulations with randomly sampled selection and dominance coefficients
 \clearpage
 \renewcommand{\thefigure}{S\arabic{figure}}
 \renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\thealgorithm}{S\arabic{algorithm}}
 \setcounter{figure}{0}
 \setcounter{section}{0}
 \setcounter{equation}{0}
+\setcounter{algorithm}{0}
 
 # Supplementary figures
 
@@ -913,8 +927,9 @@ results use $L=40, Ls=0.8, k=5$.
 
 Consider a single locus in a population of organisms with a haplodiplontic life
 cycle. We assume a finite number $n$ of alleles exist at the locus. Let $p_i$,
-$i \in [0..n-1]$, denote the frequency of the $i$th allele ($\all_i$).  The life cycle is
-assumed to take the form:
+$i \in [0..n-1]$, denote the frequency of the $i$th allele ($\all_i$).
+Ignoring mutation and migration for now, the change in allele frequency of an
+allele $A_i$ througout the life cycle is assumed to take the form:
 \begin{align}
   \underbrace{
   p_i \underset{\text{haploid selection}}{\longrightarrow}
@@ -928,12 +943,17 @@ assumed to take the form:
 \end{align}
 where we have assumed that gametogenesis, syngamy and spore formation do not
 affect the allele frequencies.
-Let the relative *gametophytic* (haploid) fitness of a haploid individual
-carrying allele $i$ be $1 + \eps s_i$, defined as the relative contribution to
-the sporophytic generation within the gametophytic generation.
-Similarly, we let $1+\eps s_{ij}$ denote the relative sporophytic (diploid)
-fitness of a diploid individual with genotype $\all_i \all_j$.
+Generally, migration could take place at any stage in the life cycle, for
+instance right after meiosis (e.g. dispersal of meiospores in bryophytes and
+Fungi), at the end of the haploid phase (e.g. gamete dispersal in algae), early
+in the diploid phase (e.g. seed dispersal in spermatophytes) or at the level of
+adult diploids (e.g. migration in animals).
 
+Let the relative haploid fitness of a haploid individual carrying allele $i$ be
+$1 + \eps s_i$, defined as the relative contribution to the diploid
+(sporophytic) generation within the haploid (gametophytic) generation.
+Similarly, we let $1+\eps s_{ij}$ denote the relative fitness of a diploid
+individual with genotype $\all_i \all_j$.
 The allele frequency change over a single generation is determined by the
 following dynamical system:
 \begin{align}
@@ -1204,3 +1224,40 @@ should be
   \end{equation}
 where the approximation holds well for weak linkage, which we assumed when we
 derived @eq:qle.
+
+## Fixed point iteration algorithm  {#sec:fp}
+
+Our approximations yield a system of equations for the expected allele
+frequencies and heterozygosities on the island which are coupled through the
+gff.
+To calculate expected allele frequencies and allele frequency distributions at
+equilibrium, we solve the system self-consistently by performing a fixed point
+iteration.
+In words: for a given initial set of allele frequencies and heterozygosities,
+we calculate the gff at each locus using @eq:gff2; using these gff values, we
+next calculate expected allele frequencies and heterozygosities at each locus
+using numerical quadrature.
+This process is repeated until convergence.
+The algorithm is more formally outlined in algorithm \autoref{alg:fp}.
+
+\begin{algorithm}[t]                                                                                      
+\caption{Fixed point iteration for calculating the expected allele frequency
+and expected heterozygosity on the island.}\label{alg:fp}
+\begin{algorithmic}[1]
+\Require Initialization $p^{(0)} = (p_1^{(0)}, \dots, p_L^{(0)})$, tolerance $\epsilon$
+\State $(pq)^{(0)} \leftarrow (p_1^{(0)}q_1^{(0)}, \dots, p_L^{(0)}q_L^{(0)})$
+\State $n \leftarrow 1, \Delta \leftarrow \infty$
+\While {$\Delta > \epsilon$}
+\For{$j=1,\dots,L$}
+\State $m_{e,j}^{(n)} \leftarrow \exp\left[ \sum_{i\ne j} s_{a,i} q_i^{(n-1)} + s_{b,i} (p_iq_i)^{(n-1)} \right]$
+\State $p_j^{(n)} \leftarrow \int_0^1 p \phi(p; N_e, u, m_{e,j}^{(n)},s_j) dp$
+\State $(p_jq_j)^{(n)} \leftarrow \int_0^1 p(1-p) \phi(p; N_e, u,
+m_{e,j}^{(n)},s_j) dp$
+\EndFor
+\State $\Delta \leftarrow \sum_j (p_j^{(n)} - p_j^{(n-1)})^2$
+\State $n \leftarrow n+1$
+\EndWhile
+\State \Return $p^{(n)}, (pq)^{(n)}$
+\end{algorithmic}
+\end{algorithm}
+
