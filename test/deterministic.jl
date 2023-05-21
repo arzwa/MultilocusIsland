@@ -12,6 +12,7 @@ function critical_point(h, Ls)
     elseif h == 1.
         pc = 0.5 + Ls/4
         ms = (0.25 - Ls^2/16)*exp((Ls*(Ls^2 + 4Ls + 4))/8)
+        ms = (0.25 - Ls^2/16)*exp((Ls/2)^3 + (Ls/√2)^2 + Ls/2)
     else
         @warn "not implemented" 
         pc = NaN
@@ -23,9 +24,11 @@ function critical_point(h, Ls)
     ms, pc
 end
 
+
 # Dominance in the multilocus model: deterministic case
-PP = map([0., 0.5, 1.0]) do h
+PP = map(enumerate([0., 0.5, 1.0])) do (j,h)
     P = plot()
+    xmx = 1.25
     map(enumerate([0.01,0.25,0.5,0.75,1.,1.25,1.5])) do (i,Ls)
         s  = 0.01
         sa = -s*h
@@ -34,12 +37,15 @@ PP = map([0., 0.5, 1.0]) do h
         color = i == 1 ? :lightgray : i-1
         plot!(x,y,   color=color, lw=3, alpha=0.7, label="\$Ls=$(@sprintf "%.2f" Ls)\$")
         plot!(x_,y_, color=color, alpha=0.7, label="", ls=:dot)
+        plot!([last(x), last(x), xmx], [last(y), 0, 0], color=color, lw=3, alpha=0.7, label="")
         ms, pc = critical_point(h, Ls)
-        cc = :firebrick
-        scatter!([ms], [pc], color=cc, label="", markerstrokecolor=cc)
+        cc = :black
+        scatter!([ms], [pc], color=cc, label="", markerstrokecolor=cc, ms=3)
     end
-    P1 = plot(P, title="\$s=0.01, h=$(@sprintf "%.2f" h)\$", xlabel="\$m/s\$", xlim=(0,1.25),
-              ylabel="\$\\tilde{p}\$", legend=h > 0.5 ? :bottomright : :topright)
+    lab = ["A", "B", "C"][j]
+    P1 = plot(P, title="($lab) \$s=0.01, h=$(@sprintf "%.2f" h)\$", 
+              xlabel="\$m/s\$", xlim=(0,xmx), bottom_margin=5Plots.mm,
+              ylabel="\$\\tilde{p}\$", legend=h == 0.5 ? :bottomright : false)
 end
 
 hs = [-1,0,0.5,1,2]
@@ -61,14 +67,16 @@ xs = let s=0.01
     end
 end
 
-P2 = plot(xlabel="\$Ls\$", ylabel="\$(m/s)_c\$")
+P2 = plot(xlabel="\$Ls\$", ylabel="\$(m/s)_c\$", title="(D)")
 map(enumerate(zip(hs, xs))) do (i,(h,x))
     plot!(0.01:0.01:1.5, first.(x[1]), label="\$h=$(@sprintf "%.2f" h)\$", lw=2, color=i)
     plot!(0.01:0.01:1.5, x[2], label="", lw=2, color=i, ls=:dot)
+    hline!([1-h], color=i, ls=:dot, alpha=0.5, label="")
 end
+vline!([1.], ls=:dot, alpha=0.7, color=:gray, label="")
 P2 = plot!(legend=:topleft, ylim=(0,1.25), legendfont=7, bg_legend=:white)
 
-plot(PP..., P2, size=(550,450))
+plot(PP..., P2, size=(900,170), layout=(1,4), left_margin=4Plots.mm)
 #savefig("$pth/detdom.svg")
         
 
@@ -132,8 +140,45 @@ map([0, 0.5, 1]) do h
 end |> x->plot(x..., layout=(3,1), size=(820,600), framestyle=:origin)
 
 
+using Roots, ForwardDiff
+eqf2(p, Ls, h, ms, q=1-p) = h*q + (1-2*h)*q^2 - ms*exp(-2Ls*(h*p + (1-2h)*p*q))
+eqf2p(p, Ls, h, ms, q=1-p) = ForwardDiff.derivative(p->eqf2(p, Ls, h, ms), p)
 f3(p, Ls, h, ms, q=1-p) = h*q + (1-2*h)*q^2 
 me(p, Ls, h, ms, q=1-p) = ms*exp(-2Ls*(h*p + (1-2h)*p*q))
+function plfun(Ls, h, ms; kwargs...)
+    plot(map(p->(p, f3(p, Ls, h, ms)), 0:0.01:1), label="\$hq + (1-2h)q^2\$")
+    plot!(map(p->(p, me(p, Ls, h, ms)), 0:0.01:1), label="\$m_e\$")
+    plot!(map(p->(p, eqf2(p, Ls, h, ms)), 0:0.01:1), framestyle=:origin, label="\$f(p)\$")
+    zz = find_zeros(p->eqf2(p, Ls, h, ms), (0,1))
+    dz = eqf2p.(zz, Ls, h, ms)
+    for (z, d) in zip(zz, dz)
+        scatter!([z], [0], label="",
+                 color=d < 0 ? 3 : :white, markerstrokecolor=3, ms=5)
+    end
+    plot!(; kwargs...)
+end
+
+P1 = map([1.0, 1.1, 1.2]) do m
+    Ls = 1.7
+    h = 0.0
+    plfun(Ls, h, m, size=(250,200), title="\$Ls=$Ls, h=$h, m/s=$m\$", legend=false)
+end |> x->plot(x..., size=(750,200), layout=(1,3))
+
+P2 = map([0.4,0.5,0.6]) do m
+    Ls = 1.5
+    h = 0.5
+    plfun(Ls, h, m, size=(250,200), title="\$Ls=$Ls, h=$h, m/s=$m\$", legend=:topright)
+end |> x->plot(x..., size=(750,200), layout=(1,3))
+
+P3 = map([0.6,0.7,0.8]) do m
+    Ls = 1.2
+    h = 1.0
+    plfun(Ls, h, m, size=(250,200), title="\$Ls=$Ls, h=$h, m/s=$m\$", legend=false)
+end |> x->plot(x..., size=(750,200), layout=(1,3), xlabel="\$p\$")
+
+plot(P1, P2, P3, layout=(3,1), size=(700,600), xlim=(-0.035,1), markerstrokewidth=1)
+
+
 map([0, 0.5, 1]) do h
     map([0.5, 1.0, 1.5, 3.0]) do Ls
         P = plot()

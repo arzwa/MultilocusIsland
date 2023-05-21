@@ -26,25 +26,27 @@ import StatsBase: sample
 import NonlinearSolve: solve
 # these logit/logistic behave better for extreme arguments
 
-include("model.jl")
-export HapDipMainlandIsland, HapMainlandIsland, Architecture, sfs, harmonicmean
-export HapDipLocus, HapLocus, DipLocus
+include("architecture.jl")
+export Architecture, HapDipLocus, HapLocus, DipLocus
 
-include("ibm.jl")
-include("finisland.jl")
-export simulate
+include("models.jl")
+export simulate, MainlandIslandModel, FiniteIslandModel, HapDipDeme
 
-include("sampler.jl")
+#include("sampler.jl")
+#include("proposal.jl")
+#export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, UnitIntervalProposal
+include("gff.jl")
 include("proposal.jl")
-export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, UnitIntervalProposal
+include("_mrfsampler.jl")
 
-include("impliciteq.jl")
+include("integration.jl")
+include("fixedpointit.jl")
 export expectedq, expectedsfs, fixedpointit, summarize_arch
 
 include("bifurcation.jl")
 export findroots_ms, solve
 
-_Ne2N(Ne, k) = ceil(Int, Ne/(2k) + Ne)
-export _Ne2N
+include("utils.jl")
+export _Ne2N, sfs, harmonicmean
 
 end # module MultilocusIsland

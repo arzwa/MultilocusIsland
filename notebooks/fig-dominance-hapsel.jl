@@ -9,7 +9,7 @@ L  = 40
 s  = Ls/L
 Ns = 8.
 k  = 5
-N  = Ne2N(Ns/s, k)
+N  = _Ne2N(Ns/s, k)
 hs = [0.0, 0.5, 1.0]
 ts = 0:0.25:1
 u  = s*0.01
@@ -20,12 +20,12 @@ mss3 = 0:0.005:1.1
 Xs = map(hs) do h
     res = map(ts) do t
         @info (t, h)
-        arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
+        arch = Architecture(HapDipLocus(-s*(1-t), -s*h*t, -s*t), L)
         # individual-based
         n = 21000
         X = tmap(mss1) do ms
-            M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
-            _, Q1  = simulate(M, n, drop=11000, thin=2) 
+            M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=arch), ms*s, ones(L))
+            _, Q1  = simulate(M, n, zeros(L), drop=11000, thin=2) 
             q1 = mean(Q1)
             (ms, q1)
         end
@@ -37,9 +37,9 @@ end |> x->vcat(x...)
 Zs = map(hs) do h
     res = map(ts) do t
         @info (t, h)
-        arch = Architecture([HapDipLocus(-s*(1-t), -s*h*t, -s*t) for i=1:L])
+        arch = Architecture(HapDipLocus(-s*(1-t), -s*h*t, -s*t), L)
         Z = tmap(mss3) do ms
-            M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=u, arch=arch)
+            M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=arch), ms*s, ones(L))
             P,_ = fixedpointit(M, [1.0])
             q3 = P[end,1,1]
             (ms, q3)

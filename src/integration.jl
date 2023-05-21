@@ -1,13 +1,3 @@
-# The allele frequency distribution Markov random field
-
-# single-locus pdf, ignoring other sites
-function ϕ(M::MainlandIslandModel, p::Real, i::Int64)
-end
-
-# single-locus pdf, with me determined by allele frequencies at other loci
-function ϕ(M::MainlandIslandModel, p::Vector{T}, i::Int64) where T<:Real
-end
-
 # The exponent of p and (1-p) resp. in Wright's distribution, +1
 Afun(N, u, m, pm) = 2N*(u + m*pm)
 Bfun(N, u, m, pm) = 2N*(u + m*(1-pm))
@@ -21,7 +11,7 @@ Cfun(N, p, sa, sb) = exp(-N*p*(2sa + sb*(2-p)))
 lϕfun(p, N, u, m, pm, sa, sb) = 
     (Afun(N,u,m,pm)-1)*log(p) + (Bfun(N,u,m,pm)-1)*log(1-p) - N*p*(2sa+sb*(2-p))
 
-function singlelocus_sfs(N, u, m, pm, sa, sb, Δ=0.02; kwargs...)
+function singlelocus_sfs(N, u, m, pm, sa, sb; Δ=0.02, kwargs...)
     Z = log(Zfun((N=N, u=u, m=m, pm=pm, sa=sa, sb=sb); kwargs...))
     ps = (Δ/2):Δ:(1-Δ/2)
     xs = map(p->exp(lϕfun(p, N, u, m, pm, sa, sb) - Z), ps)
@@ -76,7 +66,7 @@ function Z1fun(θ, x; kwargs...)
 	@unpack sa, sb, N, m, u, pm = θ
     A = Afun(N, u, m, pm)
     B = Bfun(N, u, m, pm)
-    a = (1/B)*(x)^B*x^(A-1)*Cfun(N, x, sa, sb)
+    a = (1/B)*(1-x)^B*x^(A-1)*Cfun(N, x, sa, sb)
     b, _ = quadgk(p->(((1-p)^B)/B)*gpfun(p, θ), x, 1; kwargs...)
     return a - b
 end
@@ -84,9 +74,9 @@ end
 # General x to y integral
 function Zxfun(θ, x, y; kwargs...)
 	@unpack sa, sb, N, m, u, pm = θ
-    #x == 0 && y == 1 && return Zfun(θ; kwargs...)
-    #x == 0 && return Z0fun(θ, y; kwargs...)
-    #y == 1 && return Z1fun(θ, x; kwargs...)
+    x ≈ 0 && y ≈ 1 && return Zfun(θ; kwargs...)
+    x ≈ 0 && return Z0fun(θ, y; kwargs...)
+    y ≈ 1 && return Z1fun(θ, x; kwargs...)
     I, _ = quadgk(p->ϕfun(p, N, u, m, pm, sa, sb), x, y; kwargs...)
     return I
 end
@@ -102,6 +92,15 @@ function Yfun(θ; kwargs...)
 	return L + R1 + R2
 end
 
+function Epqfun(θ; kwargs...)
+	@unpack sa, sb, N, m, u, pm = θ
+    A = Afun(N,u,m,pm)
+    B = Bfun(N,u,m,pm)
+    N, _ = quadgk(p -> p^A * (1-p)^B * Cfun(N,p,sa,sb), 0., 1.)
+    Z = Zfun(θ; kwargs...)
+    return N/Z
+end
+
 # Expected value
-Efun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
+Epfun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
 

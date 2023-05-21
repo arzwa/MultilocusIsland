@@ -10,10 +10,10 @@ cs = ColorSchemes.viridis
 Ls  = 1.
 Nes = 5.
 k   = 5
-s   = [0.2, 0.1, 0.04, 0.02]
+s   = [0.2, 0.1, 0.05, 0.01]
 
 Ne  = Nes ./ s
-NN  = _Ne2N.(Ne, k)
+NN  = Ne2N.(Ne, k)
 LL  = ceil.(Int, Ls ./ s)
 hs  = [0., 0.5, 1.]
 
@@ -22,18 +22,14 @@ ms1 = 0:0.01:0.6
 ms2 = 0.05:0.1:0.55
 
 X1 = tmap(xs) do ((N, L), h)
+    @info (N,L,h)
     s = Ls/L
     A = Architecture(DipLocus(-s*h, -s), L)
     y1 = map(ms2) do ms
-        nrep = max(50 ÷ L, 1)
-        ps = map(1:nrep) do _
-            M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=s*0.005, A=A), ms*s, ones(L))
-            _, P = simulate(M, 110000, zeros(L), drop=60000, thin=5) 
-            mean(P)
-        end
-        ms, mean(ps)
+        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=s*0.005, arch=A)
+        _, P = simulate(M, 110000, drop=10000, thin=10) 
+        ms, mean(P)
     end
-    @info (N,L,h)
     N, L, h, y1
 end
 
@@ -42,7 +38,7 @@ X2 = map(xs) do ((N, L), h)
     s = Ls/L
     A = Architecture(DipLocus(-s*h, -s), L)
     y2 = map(ms1) do ms
-        M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=s*0.005, A=A), ms*s, ones(L))
+        M = HapDipMainlandIsland(N=N, k=k, m=ms*s, u=s*0.005, arch=A)
         P,_= fixedpointit(M, [1.])
         pm = P[end,1,1]
         ms, pm
@@ -52,19 +48,15 @@ end
 
 map(1:length(X1)) do i
     (N,L,h,y1) = X1[i]
-    yl = (i ∈ [1,5,9]) ? "\$\\mathbb{E}[p]\$" : ""
-    xl = i >= 9 ? "\$m/s\$" : ""
     xs, ys = first.(y1), 1 .- last.(y1)
     scatter(xs, ys, title="\$N=$N, L=$L, h=$h\$", legend=false, markerstrokecolor=1,
             ms=4, color=:black, ylim=(0,1), xlim=(0,0.61))
     (N,L,h,y2) = X2[i]
     xs, ys = first.(y2), last.(y2)
-    plot!(xs, ys, color=:gray, lw=3, alpha=0.5, xlabel=xl, ylabel=yl)
-end |> x->plot(x..., size=(700,420), titlefont=8)
+    plot!(xs, ys, color=:gray, lw=3, alpha=0.5)
+end |> x->plot(x..., size=(750,420), titlefont=8, xlabel="\$m/s\$", ylabel="\$\\tilde{p}\$")
 
-savefig("$pth/Ls-dominance.svg")
-
-serialize("data/Ls-dominance.jls", (X1, X2))
+savefig("notebooks/img/Ls-dominance.svg")
 
 
 # show the bistability 

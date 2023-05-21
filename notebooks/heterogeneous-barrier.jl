@@ -132,25 +132,50 @@ u  = 0.005*s̄
 A  = Architecture([randlocus(sd, hd) for i=1:L])
 hs = [l.s01/l.s11 for l in A.loci]
 m  = 0.20
-M  = HapDipMainlandIsland(N=N, k=k, m=m*s̄, u=u, arch=A)
-xs = summarize_arch(M)
-P,_= fixedpointit(M, ones(xs.K));
+M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+P,_= fixedpointit(M, ones(L));
 p  = P[end,:,1]
 pq = P[end,:,2]
 
 ys = expectedsfs(M, p, pq, step=0.005, f=log10)
 plot(ys)
 
-_,Q = simulate(M, 210000, drop=10000, thin=2)
+_,Q = simulate(M, 210000, zeros(L), drop=10000, thin=10)
 
-PP = plot(title="\$L=$L, Ls = $Ls, N_e s = $Ns, m/s = $m\$", size=(450,320))
+PP = plot(size=(450,320))
 map(enumerate(1:5)) do (c,i)
     h = A[i].s01/A[i].s11
     s = -A[i].s11
     plot!(ys[i], color=c, label=@sprintf "locus %d \$(s=%.3f, h=%.2f)\$" i s h)
-    scatter!(sfs(Q[:,i], step=0.05, f=log10), markerstrokecolor=c, color=c, label="")
+    scatter!(sfs(1 .- Q[:,i], step=0.05, f=log10), markerstrokecolor=c, color=c, label="")
 end
-plot(PP, legend=:bottomleft, ylabel="\$\\log_{10}\\phi(p)\$", xlabel="\$p\$")
+PP = plot(PP, legend=:bottomright, ylabel="\$\\log_{10}\\phi(p)\$", xlabel="\$p\$")
+
+
+mss = 0:0.02:0.8
+fps = map(mss) do ms
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), ms*s̄, ones(L))
+    P,_= fixedpointit(M, ones(L));
+    p  = P[end,:,1]
+end
+X1 = permutedims(hcat(fps...))
+
+mss2 = 0.05:0.1:0.8
+ibs = tmap(mss2) do ms
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), ms*s̄, ones(L))
+    _,Q = simulate(M, 210000, zeros(L), drop=10000, thin=10)
+    vec(mean(Q, dims=1))
+end
+X2 = permutedims(hcat(ibs...))
+
+rn = 1:6
+PP2 = plot(mss, X1[:,rn], xlabel="\$m/\\bar{s}\$", ylabel="\$\\mathbb{E}[p]\$", legend=false)
+scatter!(mss2, 1 .- X2[:,rn], markerstrokecolor=[1 2 3 4 5 6], size=(300,200))
+plot!(title="\$L=$L, L\\bar{s} = $Ls, N_e \\bar{s} = $Ns, m/\\bar{s} = $m\$")
+
+plot(PP2, PP, size=(600,230), margin=3Plots.mm, ms=3)
+
+
 
 
 # s by h

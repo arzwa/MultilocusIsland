@@ -12,22 +12,84 @@ _, P = simulate(model, 10000, p0)
 
 
 # divergent selection, with dominance 
-L  = 40
-N  = 100
+L  = 25
+Ls = 1
+s  = Ls/L
+N  = 50
 k  = 5
-s  = 0.02
-h  = 0.80
-m  = fill(0.2, 2) .* s
-A1 = Architecture(DipLocus(-s*(1-h), -s), L)
-A2 = Architecture(DipLocus( s*h,  s), L)
-D  = [MultilocusIsland.HapDipDeme(N=N, k=k, A=A, u=0.005*s) for A in [A1,A2]]
+h1 = 0.10
+h2 = 0.10
+D1 = 1
+D2 = 1
+A1 = Architecture(DipLocus(-s*h1, -s), L)
+A2 = Architecture(DipLocus( s*h2,  s), L)
+As = [[A1 for i=1:D1] ; [A2 for i=1:D2]]
+d  = D1 + D2
+m  = fill(0.2, d) .* s
+D  = [MultilocusIsland.HapDipDeme(N=N, k=k, A=A, u=0.005*s) for A in As]
+MM = MultilocusIsland.FiniteIslandModel(D, m)
+p0 = permutedims(hcat(zeros(L, D1) .+ 1e-3, ones(L, D2) .- 1e-3))
+
+_, P = simulate(MM, 110000, p0, drop=10000, thin=10)
+QQ, HH = fixedpointit(MM, p0)
+
+mP1 = mean(P[:,:,1], dims=2)
+mP2 = mean(P[:,:,2], dims=2)
+plot(mP1)
+plot!(mP2)
+hline!(1 .- QQ[:,1,end])
+
+xx = expectedsfs(MM, QQ[:,:,end], HH[:,:,end], f=log10)
+
+plot(xx[1][1]); plot!(xx[2][1])
+scatter!(sfs(vec(P[:,:,1]), f=log10))
+scatter!(sfs(vec(P[:,:,2]), f=log10))
+
+MultilocusIsland.ϕ(MM, rand(d,L), d, 1)
+G = MultilocusIsland.GibbsSampler(MM)
+PP = MultilocusIsland.gibbs(MM, G, p0, 10000)
+
+P1 = plot(sfs(vec(PP[:,1,:]), f=log10), 
+          title="\$Ls=$Ls, L=$L, D_1 = $D1, D_2=$D2, h=$h1, N=$N, m/s=$(m[1]/s)\$")
+plot!(sfs(vec(PP[:,d,:]), f=log10))
+scatter!(sfs(vec(P[:,:,1]), f=log10))
+scatter!(sfs(vec(P[:,:,d]), f=log10))
+
+
+# as the number of demes grows, it should start working?
+L  = 25
+Ls = 1
+s  = Ls/L
+N  = 50
+k  = 5
+h1 = 0.10
+h2 = 0.10
+D1 = 25
+D2 = 25
+A1 = Architecture(DipLocus(-s*h1, -s), L)
+A2 = Architecture(DipLocus( s*h2,  s), L)
+As = [[A1 for i=1:D1] ; [A2 for i=1:D2]]
+d  = D1 + D2
+m  = fill(0.2, d) .* s
+D  = [MultilocusIsland.HapDipDeme(N=N, k=k, A=A, u=0.005*s) for A in As]
 MM = MultilocusIsland.FiniteIslandModel(D, m)
 
-# assume secondary contact
-p0 = [zeros(L), ones(L)]
-_, P = simulate(MM, 11000, p0, drop=1000)
+# Gibbs? 
+MultilocusIsland.ϕ(MM, rand(d,L), d, 1)
+G = MultilocusIsland.GibbsSampler(MM)
+p0 = permutedims(hcat(zeros(L, D1) .+ 1e-3, ones(L, D2) .- 1e-3))
+PP = MultilocusIsland.gibbs(MM, G, p0, 10000)
+_, P = simulate(MM, 21000, p0, drop=1000)
 
-pm = mean(mean(P, dims=1), dims=2)
+P2 = plot(sfs(vec(PP[:,1,:]), f=log10), 
+          title="\$Ls=$Ls, L=$L, D_1 = $D1, D_2=$D2, h=$h1, N=$N, m/s=$(m[1]/s)\$")
+plot!(sfs(vec(PP[:,d,:]), f=log10))
+scatter!(sfs(vec(P[:,:,1]), f=log10))
+scatter!(sfs(vec(P[:,:,d]), f=log10))
+
+
+plot(P1, P2, legend=false, size=(800,250), ms=2, titlefont=8)
+
 
 ps = mean(P, dims=2)
 
