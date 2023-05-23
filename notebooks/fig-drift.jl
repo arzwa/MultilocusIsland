@@ -1,6 +1,7 @@
 using MultilocusIsland, StatsBase, ColorSchemes, ThreadTools
 using Plots, PlotThemes, Distributions, Parameters; theme(:hokusai)
 cs = ColorSchemes.viridis
+cs = ColorSchemes.Hokusai3
 
 L   = 40
 Ls  = 0.8
@@ -20,7 +21,8 @@ Z = map(xs) do (Nes, h)
         M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=s*0.005, A=A), ms*s, ones(L))
         P,_= fixedpointit(M, [1.])
         pm = P[end,1,1]
-        ms, pm
+        dpm = solve(MM)
+        ms, pm, dpm
     end
     Nes, h, y2
 end
@@ -82,7 +84,7 @@ scatter!(xs_, reverse(ys_), label="", color=1, markerstrokecolor=1, ms=3)
 # Obtain the migration rate for which some critcial 𝔼p is obtained.
 using Optim, Printf
 L   = 50
-Ls  = 1.0
+Ls  = 1.2
 s   = Ls/L
 Nes = 1:1:32
 k   = 500
@@ -101,6 +103,7 @@ function obj(pc, Nes, s, h, L, k=5)
     end
 end
 
+#hs = [0.6, 0.5, 0.4]
 xs = map(hs) do h
     tmap(Nes) do Ne
         res = optimize(obj(pc, Ne, s, h, L), 0., 3.)
@@ -109,17 +112,15 @@ xs = map(hs) do h
 end
 
 P1 = plot(title="\$Ls=$Ls, L=$L\$")
-P2 = plot(title="\$Ls=$Ls, L=$L\$")
 map(enumerate(xs)) do (i,x)
     h = x[1][2]
     c = get(cs, (h - minimum(hs)) / (maximum(hs) - minimum(hs)))
     plot!(P1, first.(x), last.(x), label="\$h=$(@sprintf "%.2f" h)\$", marker=true,
           ms=2, color=c, markerstrokecolor=c)
-    plot!(P2, first.(x), last.(x), label="\$h=$(@sprintf "%.2f" h)\$", marker=true,
-          ms=2, color=c, markerstrokecolor=c)
+#    hline!([1-h], color=c, ls=:dot, label="")
 end
-plot(P1, P2, xlabel="\$N_e s\$", ylabel="\$m_c/s \\ [p_c=$pc]\$",
-     size=(650,430), legendfont=6)
+plot(P1, xlabel="\$N_e s\$", ylabel="\$m_c/s \\ [p_c=$pc]\$",
+     size=(450,330), legendfont=6, ylim=(0,1.5))
 
 
 # This doesn't appear to be interesting: determining pc from deterministic
@@ -145,3 +146,60 @@ map(enumerate(ys)) do (i,x)
 end
 plot!(xlabel="\$N_e s\$", ylabel="\$m_c/s \\ [p_c=$pc]\$", size=(300,230), legend=:bottomright)
 
+
+L   = 40
+Ls  = 0.8
+Nes = [2.,4.,8.,16.,32]
+k   = 5
+s   = Ls/L
+hs  = [0., 0.5, 1.]
+xs  = vec(collect(Iterators.product(Nes, hs)))
+ms1 = 0.01:0.01:0.85
+
+map(hs) do h
+    @show h
+    A = Architecture(DipLocus(-s*h, -s), L)
+    PP = plot()
+    map(enumerate(Nes)) do (i,Ns)
+        xs = map(ms1) do ms
+            Ne = Ns/s
+            N = _Ne2N(Ne, k)
+            MM = MainlandIslandModel(HapDipDeme(N=N, k=k, u=s*0.005, A=A), ms*s, ones(L))
+            P,_= fixedpointit(MM, [1.])
+            Epm = P[end,1,1]
+            pm = solve(MM)
+            (ms, pm, Epm)
+        end
+        plot!(getindex.(xs, 1), getindex.(xs, 3), color=i, 
+              markerstrokecolor=i, 
+              label="\$N_es=$Ns\$")
+        i == length(Nes) && plot!(getindex.(xs, 1), getindex.(xs, 2), color=:black, 
+              markerstrokecolor=i, 
+              label="\$N_es=\\infty\$")
+    end
+    PP
+end |> x->plot(x...)
+
+Z = map(xs) do (Nes, h)
+    Ne  = Nes / s
+    N = _Ne2N(Ne, k)
+    A = Architecture(DipLocus(-s*h, -s), L)
+    y2 = map(ms1) do ms
+        M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=s*0.005, A=A), ms*s, ones(L))
+        P,_= fixedpointit(M, [1.])
+        pm = P[end,1,1]
+        ms, pm
+    end
+    Nes, h, y2
+end
+
+dd = Dict(h=>plot() for h=hs)
+map(1:length(Z)) do i
+    (N,h,y2) = Z[i]
+    yl = (h ∈ hs[[1,4]]) ? "\$\\mathbb{E}[p]\$" : ""
+    xl = h > hs[3] ? "\$m/s\$" : ""
+    xs, ys = first.(y2), last.(y2)
+    plot!(dd[h], xs, ys, lw=2, xlabel=xl, ylabel=yl, title="\$h=$h\$",
+          legend=h==hs[end] ? :bottomright : false, label="\$N_es=$N\$")
+end
+plot([dd[h] for h in hs]..., size=(600,300))

@@ -89,9 +89,9 @@ end
 # system, and then solve it using nlsolve.
 
 function nlsystem(M)
-    classes = summarize_arch(M)
-    function system(lp, classes)
-        @unpack m, loci, K, L, γ, y = classes
+    classes = getclasses(M)
+    function system(lp, θ)
+        @unpack m, y, u, loci, K, L, γ = θ
         p = logistic.(lp)
         xs = map(zip(p, loci, γ, y)) do (pj, lj, wj, yj)
             @unpack s1, s01, s11 = lj
@@ -103,16 +103,24 @@ function nlsystem(M)
             g  = _gff(xs, γ, L, j)
             sa = s1+s01
             sb = s11-2s01
-            m*g*(y[j] - (1-p[j])) + p[j]*(1-p[j])*(sa + sb*(1-p[j]))
+            pj = p[j]
+            qj = 1-p[j]
+            -m*g*(y[j] - qj) - pj*qj*(sa + sb*qj) + u*(1 - 2pj)
         end
     end
-    system, classes
+    system, classes 
 end
 
-function solve(M::MainlandIslandModel, init; kwargs...)
+function solve(M::MainlandIslandModel, init::Vector{T}; kwargs...) where T
     system, classes = nlsystem(M)
     prob = NonlinearProblem{false}(system, logit.(init), classes)
     solver = solve(prob, NewtonRaphson(); kwargs...)
     logistic.(solver.u), solver
 end
 
+# equal effects case
+function solve(M::MainlandIslandModel; kwargs...)
+    system, classes = nlsystem(M)
+    f(p) = system(logit(p), classes)[1]
+    maximum(find_zeros(f, 0, 1))
+end

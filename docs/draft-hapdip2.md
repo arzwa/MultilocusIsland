@@ -486,7 +486,7 @@ individuals, so that $g\Ex[W_{d,0}]$ is the appropriate gff, where
 In the present work, we shall always assume migration is due to dispersal of
 haploid spores, so that @eq:gff gives the relevant gff.
 
-### Dynamics and equilibria for the multilocus model
+### Dynamics and equilibria for the multilocus model {#sec:dynamics}
 
 The gff captures the effect of LD among selected loci on the rate of gene flow
 from the mainland into the island at any individual locus.
@@ -580,10 +580,10 @@ For the case where migration is at the haploid stage, restricting the analysis
 to diploid selection incurs no loss of generality, as haploid selection then
 simply amounts to a rescaling of the dominance and selection coefficients (see
 methods).
-The effective dominance coefficient when there is haploid selection with
-intensity $s_1$ will be $h_e = \frac{s_1+s_{01}}{2s_1+s_{11}}$, so that the
-effect of haploid selection is to pull $h_e$ towards the additive case
-($h=0.5$).
+The effective (diploid) dominance coefficient when there is haploid selection
+with intensity $s_1$ will be $h_e = \frac{s_1+s_{01}}{2s_1+s_{11}}$, so that
+the effect of haploid selection is to pull $h_e$ towards the additive case
+($h=1/2$).
 
 In the homogeneous deterministic model, all loci have the same dynamics if the
 initial allele frequencies are equal.
@@ -611,7 +611,8 @@ On the other hand, when the invading alleles are recessive ($h=0$), gene flow
 is not at all impeded when the deleterious allele is rare (the gff being near
 one).
 When $h<1/3$, the barrier strength, as measured by $g^{-1}$ [@barton1986],
-*increases* as the deleterious allele increases in frequency on the island,
+*increases* as the deleterious allele increases in frequency on the island (and
+hence as differentiation between mainland and island *decreases*),
 decreasing the rate of gene flow, until a value of $q=(3h-1)/(4h-2)$ is reached
 (@fig:detdom, @fig:gff).
 This is essentially because in the latter case, irrespective of how many
@@ -629,79 +630,49 @@ The situation is clearly different when migrant alleles are dominant, as the
 invading alleles will immediately express their full load in the resident
 population, irrespective of the other allele at the locus, yielding efficient
 selection against migrant alleles.
-When the frequency of the deleterious allele increases on the island, this
-will merely increase the expected relative fitness of migrants in the resident
-background, and hence reduce the efficiency of selection against migrant
-genotypes.
+When the frequency of the deleterious allele increases on the island (and
+differentiation decreases), this will merely increase the expected relative
+fitness of migrants in the resident background, and hence reduce the efficiency
+of selection against migrant genotypes.
 
-@Fig:detdom shows that the swamping thresholds are also considerably
-affected by dominance.
-For $h=0$ and $h=0.5$, the multilocus model starts to exhibit qualitatively
-different features compared to the single locus model as $Ls$ increases,
-with bistable behavior and correspondingly sharp thresholds for the loss of
-local adaptation when $Ls$ is sufficiently large. 
-We now take a closer look at these equilibria and their critical behavior.
-Clearly, $p=0$ is always a solution of @eq:odeq, and it will correspond to a locally stable
-equilibrium (i.e. swamping) whenever $m/s > 1-h$.
-Other equilibria, when they exist, are given by the zeros of the function
-\begin{equation}
-  f(p) = hq + (1-2h)q^2 - \frac{m}{s}g[p] \label{eq:eq1}
-\end{equation}
-Note that $g[p] > 0$ and we assume $s > 0$, so that for any fixed $h$, as $m$
-increases, there will indeed be a critical migration rate beyond which $f(p) <
-0$, from which point onwards the only stable equilibrium will be $p=0$.
-At the critical point, the equilibrium allele frequency will satisfy the
-additional constraint $f'(p) = 0$ (see @fig:mlstab)[^crit], 
-  \begin{align}
-  f'(p) &= h + 2(1-2h)q - 2Lm(1 - 3h - 2(1-2h)q)g[p] = 0 
-  \label{eq:eq2}
-  \end{align}
-We can solve @eq:eq1 for $g[p]$, and then plug in $g[p]$ in @eq:eq2.
-This yields a cubic polynomial in $p$ which can be solved for the allele
-frequency $p_c$ at the critical point.
-We can then plug $p_c$ into @eq:eq1 and solve for $m_c/s$.
-While the general expressions yield not much insight, we can focus on a number
-of special cases.
-
-[^crit]: This appears to hold for arbitrary $h$, at least I've convinced myself
-of this using some graphs. Haven't proved that it does though.
-
-Firstly, in the additive case ($h=0.5$), a critical point different from $1-h$
-appears when $Ls > 1$, in which case the equilibrium frequency at the critical
-point will be $p_c = 1-1/Ls$. The corresponding critical migration rate is
-  $$\frac{m_c}{s} = \frac{e^{Ls-1}}{2Ls}.$$
-In the case where local adaptation is due to dominant alleles ($h=0$), we have
-again critical behavior as soon as $Ls>1$, with the swamping threshold
-occurring at $m/s=1$ otherwise.
-In this case, we find
-\begin{align*}
-    p_c &= \frac{3}{4} - \frac{\sqrt{L s(Ls + 8)}}{4 L s} < \frac{1}{2}, 
-  & \frac{m_c}{s} = 
-    \left(\frac{1}{4} + \frac{\sqrt{L s \left(L s + 8\right)}}{4Ls}\right)^{2} e^{\frac{L s}{4}
-    + \frac{\sqrt{L s \left(L s + 8\right)}}{4} - 1}.
-\end{align*}
-In contrast with the additive case (where as $Ls$ increases, arbitrary
-equilibrium differentiation can be maintained near the critical point),
-equilibrium differentiation will be below $0.5$ near $m_c$ when $h=0$.
-Lastly, for recessive local adaptation ($h=1$), we have bistable critical
-behavior for all $Ls > 0$. The equilibrium frequency at the critical point is
-always larger than $1/2$ and is given by the zeros of the cubic polynomial
-  $$4 Ls p^{3} - 4 Ls p^{2} + 2 p - 1 = 0$$
-for which we have no simple expressions. A fair approximation for $Ls < 1.5$ is
-given by
-\begin{align*}
-  p_c &\approx \frac{1}{2} + \frac{Ls}{4}, 
-  & \frac{m_c}{s} \approx \left(\frac{1}{4} - \frac{(L s)^2}{16}  \right) 
-  e^{\left(\frac{Ls}{2}\right)^{3} +  \left(\frac{L s}{\sqrt 2}\right)^2 +
-    \frac{Ls}{2}}
-\end{align*}
-The swamping threshold is seen to increase strongly with increasing $Ls$.
-\hl{This stuff should move to an appendix, it does not provide much insight
-beyond the graph (it does clarify that one needs $Ls > 1$ before any
-change in the critical migration rate is seen, and what sort of differentiation
-one sees near the critical point). Should figure out for arbitrary $h$ what the
-$Ls$ is for which one gets critical behavior see also} @fig:pplot.
-
+In the single locus model, arbitrary small frequencies of the locally
+beneficial allele can be maintained at migration-selection balance when $h <
+2/3$, whereas in the case of $h > 2/3$, a sharp swamping threshold is observed
+as the equilibrium frequency of the locally beneficial allele reaches some
+critical frequency $p_c \le 1/2$.
+@sachdeva2022 showed that such sharp thresholds for swamping also appear in
+the absence of dominance due to LD.
+LD both increases the critical migration rate ($m_c$) at which swamping occurs
+and the minimum level of differentiation that can be maintained before the
+swamping point is reached ($p_c$).
+Our results indicate that dominance has a considerable influence on how LD
+sharpens and displaces swamping thresholds (@fig:detdom, @sec:supdet).
+As $Ls$ increases, the behavior for the case where $h < 2/3$ (i.e. when local
+adaptation is not strongly recessive) is roughly similar to the additive case,
+with critical behavior emerging as $Ls$ surpasses some critical value
+(@sec:supdet, @fig:pplot).
+However, the critical migration rate at which swamping occurs is only
+marginally affected by LD in the latter case for moderate levels of divergence
+($Ls < 2$, say).
+This is in sharp contrast with the case where local adaptation is due to
+strongly recessive alleles, where the critical migration increases rapidly with
+$Ls$.
+Importantly, the critical differentiation ($p_c$) level below which local
+adaptation collapses is very different for different degrees of dominance.
+In the additive case, one can show that $p_c = 1-1/Ls$ (@sec:supdet), so that
+arbitrary differentiation can be obtained at the critical point depending on
+$Ls$.
+For completely dominant local adaptation, however, $p_c$ increases from $0$ to
+$1/2$ as $Ls \rightarrow \infty$, whereas for recessive local adaptation, $p_c$
+increases from $1/2$ to $1$ as $Ls$ grows.
+This means, in particular, that for moderate levels of divergence, $Ls > 0.75$
+say, and large population sizes, one would not expect to see locally beneficial
+recessives at frequencies much below $0.8$, compared to $0.5$ for the single
+locus model.
+\hl{As Himani noted before, it may be worthwhile to highlight that although a
+consideration of the gff in the regime where deleterious alleles are rare may
+suggest a strong barrier, it may be that swamping thresholds are hardly
+affected because of what happens to the gff as differentiation decreases...}
 
 ## Accounting for drift and comparison to individual-based simulations
 
@@ -713,9 +684,15 @@ Indeed, @sachdeva2022 showed that, for small populations, the sharp thresholds
 for swamping predicted by the deterministic multilocus theory when $Ls$ is
 appreciable need not apply, and that the critical migration rate may be
 significantly reduced.
-Furthermore, it is hard to evaluate the accuracy of our approximations against
-simulations, as any individual-based simulation will necessarily exhibit
-genetic drift.
+Furthermore, for all but the largest populations, the actually observed
+frequency of a locally adaptive allele (and hence differentiation between the
+mainland and island) at migration-selection-drift balance in the model as
+outlined in @sec:model may deviate substantially from the deterministic
+approximation, so that it becomes important to understand the *distribution* of
+allele frequencies.
+More pragmatically, it is hard to evaluate the accuracy of our approximations
+against simulations, as any individual-based simulation will necessarily
+exhibit the effects of genetic drift.
 
 ![
 Predicted allele frequency distributions for the diploid multilocus model with
@@ -727,36 +704,23 @@ generations after an initial 10000 generations to reach equilibrium.
 Other parameter settings are $Ls = 0.8, L=40, m/s=0.2, u=0.005s$.
 ](/home/arthur_z/vimwiki/build/img/2023-05-03/domdriftdist.svg){#fig:driftdist}
 
-We find that the remarkable accuracy of the heuristic multilocus diffusion
-approximation observed in @sachdeva2022 extends to the case with dominance.
+Similar to @sachdeva2022, we find that the heuristic multilocus diffusion
+approximation obtained by substituting $m_e$ for $m$ in the single-locus
+diffusion theory yields remarkably accurate predictions to the multilocus model
+outlined in @sec:model.
 Indeed, even in parameter regimes where the approximation is expected to break
 down ($Ls$ appreciable with $L$ small and $s$ large, small population size) we
 obtain good predictions (@fig:Lsdom).
 Not only can we reliably obtain the expected frequency of alleles on the
 island, we also obtain very good predictions for the entire allele frequency
 distribution as observed in individual-based simulations (@fig:driftdist).
-The bistability observed in the deterministic model, in particular when local
-adaptation is recessive ($h=1$), manifests as multimodality in the equilibrium
-allele frequency distribution.
-Although the equilibrium allele frequency distribution should be independent of
-the initial condition (the individual-based model can be thought of as an
-ergodic Markov chain on the space of $N$ $L$-locus genotypes), for appreciable
-$Ls$, the observed allele frequency distribution in any finite-time simulation
-can depend strongly on the initial conditions (that is, as $Ls$ increases,
-stochastic jumps between the different modes of the $L$-dimensional joint
-allele frequency distribution become increasingly less likely, and occur on
-time scales that are neither biologically relevant nor computationally
-feasible).
-The fixed point iteration will in that case converge to an expectation computed
-near one of the modes of the allele frequency distribution (see
-@fig:bifurcation for an illustration).
+The sharp swamping thresholds observed in the deterministic model, in
+particular with recessive local adaptation ($h=1$), correspond to strongly
+bimodal allele frequency distributions in the model with drift.
+As described in more detail in @sec:init, this may render our numerical
+approaches sensitive to the initilization of the island population.
 Throughout, we shall assume a scenario of secondary contact, so that the island
 starts as fixed for the locally beneficial allele at all loci.
-We note, however, that if different initial conditions are of interest, our
-simulations suggest that the numerical approach remains accurate.
-Furthermore, we can use the method to characterize the parameter regime in
-which the detailed history of the population is likely to matter for the
-evolution and maintenance of locally beneficial variation.
 
 The general effects of genetic drift are as expected, in that the barrier
 effect is considerably reduced as $N_e$ decreases (@fig:drift).
@@ -881,8 +845,13 @@ the deleterious allele frequency $q$ (bottom row), for $Ls=0.5, 1, 1.5$
 Critical equilibrium differentiation ($p_c$, the frequency of the locally
 beneficial allele on the island just before swamping) and critical migration rate
 ($m_c$) for intermediate dominance ($0\le h \le 1$) and low to appreciable
-divergence ($Ls \le 1.5$).
-](/home/arthur_z/vimwiki/build/img/2023-05-02/phase.svg){#fig:pplot}
+divergence ($Ls \le 1.5$). The solid white line marks the region of parameter
+space where the system exhibits bistability (i.e. a sharp swamping threshold at
+a critical differentiation level $p_c > 0$). The dashed lines mark $h=1/3$ and
+$h=2/3$. For $h>2/3$, bistability occurs for all $m$. For $0 < h < 1/3$, the
+minimum $Ls$ for which bistable behavior is observed increases, with increasing
+$h$, after which it quickly falls.
+](/home/arthur_z/vimwiki/build/img/2023-05-02/phase2.svg){#fig:pplot}
 
 
 ![Comparison of the multilocus diffusion approximation (gray line) against
@@ -896,27 +865,13 @@ discarding the first 60000, and averaging across loci. For each $L$ we simulate
 $n$ replicates so that $nL = 50$. The mutation rate was set to $u=0.005s$. 
 ](/home/arthur_z/vimwiki/build/img/2023-05-03/Ls-dominance.svg){#fig:Lsdom}
 
-![
-Different apparent equilibria depending on initial conditions.
-In the left plot, the yellow line ($p_0 = 1$) indicates the expected allele
-frequencies as determined using the fixed point iteration of algorithm
-\autoref{alg:fp}, starting with $p^{(0)} = (1,1,\dots,1)$ (i.e. secondary
-contact, maximal initial differentiation), whereas the green line assumes
-$p^{(0)} = (0,0,\dots,0)$ (no initial differentiation). The dots show
-results from individual-based simulations with the same initial conditions
-(50000 generation, keeping the last 25000 and subsampling every 5 generations).
-The three plots on the right show the evolution of the fixed point iteration
-for different initial initial conditions $p^{(0)} = (p_0, p_0, \dots, p_0)$ for
-three values of $m$.  Note the bifurcation of the dynamical system defined by
-the algorithm: for $m/s = 0.2$ and $m/s=0.4$ there is a single globally stable
-fixed point, whereas for $m/s = 0.3$, there are two locally stable fixed
-points.
-\label{fig:bifurcation}
-](/home/arthur_z/vimwiki/build/img/2023-04-19/example-bif-fp.svg){width=70%}
 
 ![
-Effect of drift on equilibrium differentiation and swamping thresholds. All
-results use $L=40, Ls=0.8, k=5$.
+Effect of drift on equilibrium differentiation and swamping thresholds for
+a range of dominance values $h$, ranging from overdominant local adaptation
+$h=-1$ (hybrids have an advantage), to underdominant local adaptation $h=2$
+(hybrids perform worse than mainland individuals on the island). All results
+use $L=40, Ls=0.8, k=5$.
 ](/home/arthur_z/vimwiki/build/img/2023-05-03/domdrift.svg){#fig:drift}
 
 \clearpage
@@ -1082,7 +1037,8 @@ of the following conditions holds
   s_{01} &> -s_1 \text{ and } s_{01} > s_1 + s_{11} \\
   s_{01} &< -s_1 \text{ and } s_{01} < s_1 + s_{11} ,
 \end{align}
-i.e. when there is *ploidally antagonistic selection*.
+i.e. when there is *ploidally antagonistic selection*, diploid over- or
+underdominance, or both.
 The fixed point is obtained at
   \begin{equation}
   \tilde{p} = \frac{s_a + s_b}{s_a} = \frac{s_1 + s_{11} - s_{01}}{s_{11} - 2s_{01}}
@@ -1131,6 +1087,21 @@ iii. When $-(s_a + s_b) < m < s_b$ and $4s_b/m < (s_a/m)^2 \iff 4m < s_a^2/s_b$,
 
 The relation between the key parameters $s_a/m$ and $s_b/m$ and the equilibrium
 behavior of the system when $m>0$ is illustrated in @fig:stab.
+
+When condition (iii) holds, sharp thresholds for swamping are observed, in
+which case there is a certain critical allele frequency $p_c$ below which no
+local adaptation cannot be maintained whatever the migration rate.
+We can ask for which degree of dominance such sharp thresholds for swamping can
+possibly be observed. 
+From @eq:quad we see that at an equilibrium which does not correspond to $p=0$,
+the condition $f(q) = m + s_a q + s_bq^2 = 0$ holds.
+A sufficient condition for observing a sharp threshold is that $f$ obtains a
+maximum for some $q < 1$, hence that $f'(1) > 0$ where $f'(q) = s_a + 2s_bq$.
+This will be the case whenever $s_a + 2s_b > 0$.
+In the diploid case with the usual parameterization where $s_a = -sh$ and $s_b
+= -s(1-2h)$, this shows that critical behavior is expected as soon as $h >
+2/3$.
+
 
 
 ## Two-locus haplodiplontic mainland-island model \label{sec:twolocus}
@@ -1260,4 +1231,126 @@ m_{e,j}^{(n)},s_j) dp$
 \State \Return $p^{(n)}, (pq)^{(n)}$
 \end{algorithmic}
 \end{algorithm}
+
+
+## Swamping thresholds for the deterministic multilocus model {#sec:supdet}
+
+We now take a closer look at the equilibria of @eq:odeq and their critical
+behavior.
+Clearly, $p=0$ is always a solution of @eq:odeq, and it will correspond to a locally stable
+equilibrium (i.e. swamping) whenever $m/s > 1-h$.
+Other equilibria, when they exist, are given by the zeros of the function
+\begin{equation}
+  f(p) = hq + (1-2h)q^2 - \frac{m}{s}g[p] \label{eq:eq1}
+\end{equation}
+Note that $g[p] > 0$ and we assume $s > 0$, so that for any fixed $h$, as $m$
+increases, there will indeed be a critical migration rate beyond which $f(p) <
+0$, from which point onwards the only stable equilibrium will be $p=0$.
+At the critical point, the equilibrium allele frequency will satisfy the
+additional constraint $f'(p) = 0$ (see @fig:mlstab)[^crit], 
+  \begin{align}
+  f'(p) &= h + 2(1-2h)q - 2Lm(1 - 3h - 2(1-2h)q)g[p] = 0 
+  \label{eq:eq2}
+  \end{align}
+We can solve @eq:eq1 for $g[p]$, and then plug in $g[p]$ in @eq:eq2.
+This yields a cubic polynomial in $p$ which can be solved for the allele
+frequency $p_c$ at the critical point:
+\begin{equation}
+    0=Ls ((1-h)^{2}- 2p^{3} (1-2h)^2 + p^{2} (14 h^{2} - 17 h + 5) - p (7 h^{2} -
+    11 h + 4)) -1 + \frac{3}{2} h + (1 - 2 h)p 
+\end{equation}
+We can then plug $p_c$ into @eq:eq1 and solve for $m_c/s$.
+While the general expressions yield not much insight, we can focus on a number
+of special cases.
+
+[^crit]: This appears to hold for arbitrary $h$, at least I've convinced myself
+of this using some graphs. Haven't proved that it does though.
+
+Firstly, in the additive case ($h=0.5$), a critical point different from $1-h$
+appears when $Ls > 1$, in which case the equilibrium frequency at the critical
+point will be $p_c = 1-1/Ls$. The corresponding critical migration rate is
+  $$\frac{m_c}{s} = \frac{e^{Ls-1}}{2Ls}.$$
+In the case where local adaptation is due to dominant alleles ($h=0$), we have
+again critical behavior as soon as $Ls>1$, with the swamping threshold
+occurring at $m/s=1$ otherwise.
+In this case, we find
+\begin{align*}
+    p_c &= \frac{3}{4} - \frac{\sqrt{L s(Ls + 8)}}{4 L s} < \frac{1}{2}, 
+  & \frac{m_c}{s} = 
+    \left(\frac{1}{4} + \frac{\sqrt{L s \left(L s + 8\right)}}{4Ls}\right)^{2} e^{\frac{L s}{4}
+    + \frac{\sqrt{L s \left(L s + 8\right)}}{4} - 1}.
+\end{align*}
+In contrast with the additive case (where as $Ls$ increases, arbitrary
+equilibrium differentiation can be maintained near the critical point),
+equilibrium differentiation will be below $0.5$ near $m_c$ when $h=0$.
+Lastly, for recessive local adaptation ($h=1$), we have bistable critical
+behavior for all $Ls > 0$. The equilibrium frequency at the critical point is
+always larger than $1/2$ and is given by the zeros of the cubic polynomial
+  $$4 Ls p^{3} - 4 Ls p^{2} + 2 p - 1 = 0$$
+for which we have no simple expressions. A fair approximation for $Ls < 1.5$ is
+given by
+\begin{align*}
+  p_c &\approx \frac{1}{2} + \frac{Ls}{4}, 
+  & \frac{m_c}{s} \approx \left(\frac{1}{4} - \frac{(L s)^2}{16}  \right) 
+  e^{\left(\frac{Ls}{2}\right)^{3} +  \left(\frac{L s}{\sqrt 2}\right)^2 +
+    \frac{Ls}{2}}
+\end{align*}
+The swamping threshold is seen to increase strongly with increasing $Ls$.
+
+## Sensitivity to initial conditions {#sec:init}
+
+![
+Different apparent equilibria depending on initial conditions.
+In the left plot, the yellow line ($p_0 = 1$) indicates the expected allele
+frequencies as determined using the fixed point iteration of algorithm
+\autoref{alg:fp}, starting with $p^{(0)} = (1,1,\dots,1)$ (i.e. secondary
+contact, maximal initial differentiation), whereas the green line assumes
+$p^{(0)} = (0,0,\dots,0)$ (no initial differentiation). The dots show
+results from individual-based simulations with the same initial conditions
+(50000 generation, keeping the last 25000 and subsampling every 5 generations).
+The three plots on the right show the evolution of the fixed point iteration
+for different initial initial conditions $p^{(0)} = (p_0, p_0, \dots, p_0)$ for
+three values of $m$.  Note the bifurcation of the dynamical system defined by
+the algorithm: for $m/s = 0.2$ and $m/s=0.4$ there is a single globally stable
+fixed point, whereas for $m/s = 0.3$, there are two locally stable fixed
+points.
+\label{fig:bifurcation}
+](/home/arthur_z/vimwiki/build/img/2023-04-19/example-bif-fp.svg){width=70%}
+
+Although the equilibrium allele frequency distribution should be independent of
+the initial condition (the individual-based model can be thought of as an
+ergodic Markov chain on the space of $N$ $L$-locus genotypes), for appreciable
+$Ls$, the observed allele frequency distribution in any finite-time simulation
+can depend strongly on the initial conditions (that is, as $Ls$ increases,
+stochastic jumps between the different modes of the $L$-dimensional joint
+allele frequency distribution become increasingly less likely, and occur on
+time scales that are neither biologically relevant nor computationally
+feasible).
+This is especially true in the strongly recessive case ($h > 2/3$) and when LD
+is substantial.
+This is similar to the behavior in the deterministic model: when $Ls$ or $h$ is
+sufficiently large, and sharp swamping thresholds appear, the system is
+bistable, and the polymorphic equilibrium cannot be reached when the initial
+condition corresponds to a state of no or little differentiation.
+
+The fixed point iteration will in that case converge to an expectation computed
+near one of the modes of the allele frequency distribution (see
+@fig:bifurcation for an illustration).
+In other words, considering the fixed point iteration outlined in algorithm
+\autoref{alg:fp} as a discrete dynamical system, and treating $m/s$ as a
+bifurcation parameter, two bifurcation points occur succesively, as shown in
+@fig:bifurcation. For small $m/s$, a single globally stable polymorphic
+equilibrium is obtained. After the first bifurcation point, this equilibrium
+ceases to be globally stable, and a second locally stable equilibrium
+corresponding to almost no differentiation appears. After the second
+bifurcation point the lower equilibrium becomes globally stable.
+The region of parameter space where the two stable equilibria coexist
+corresponds to the situation where the assumption of population genetic
+equilibrium becomes questionable, where the state of the population after a
+large but finite time of evolution depends strongly on the detailed history of
+the population. 
+
+
+
+
 

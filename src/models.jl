@@ -128,7 +128,9 @@ end
 
 allelefreqs(pops::Vector{<:Population}) = cat(allelefreqs.(pops)..., dims=2)
 
-function initialize_ibm(rng::AbstractRNG, M::FiniteIslandModel, p0)
+initialize_ibm(rng::AbstractRNG, M, p0) = p0
+
+function initialize_ibm(rng::AbstractRNG, M::FiniteIslandModel, p0::Matrix{Float64})
     map(k->initialize_island(rng, M[k].N, nloci(M[k]), p0[k,:]), 1:ndeme(M))
 end
 
