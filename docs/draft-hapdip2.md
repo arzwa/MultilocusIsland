@@ -1,7 +1,10 @@
 ---
 fontsize: 11pt
 geometry: margin=1.2in
-title: Maintenance of polygenic local adaptation and reproductive isolation in diploid and haplodiplontic populations
+title: "
+    The effects of dominance, haploid selection and heterogeneous barrier
+    architecture on the maintenance of polygenic local adaptation and
+    reproductive isolation"
 author: Arthur Zwaenepoel, Himani Sachdeva, Christelle Fraïsse
 header-includes: 
   - \DeclareMathSymbol{\shortminus}{\mathbin}{AMSa}{"39}
@@ -10,12 +13,14 @@ header-includes:
   - \newcommand{\Bin}{\mathrm{Bin}}
   - \newcommand{\Beta}{\mathrm{Beta}}
   - \newcommand{\Exp}{\mathrm{Exponential}}
+  - \newcommand{\Gam}{\mathrm{Gamma}}
   - \newcommand{\Bfun}{\mathrm{B}}
   - \newcommand{\eps}{\epsilon}
   - \newcommand{\all}{A}
   - \newcommand{\erf}{\mathrm{erf}}
   - \newcommand{\erfi}{\mathrm{erfi}}
   - \newcommand{\fix}{\mathrm{fix}}
+  - \newcommand{\logit}{\mathop{\mathrm{logit}}}
   - \usepackage{caption}
   - \captionsetup[figure]{labelfont=bf,font=small}
   - \usepackage{float,soul}
@@ -28,26 +33,26 @@ header-includes:
 abstract: \lipsum[1]
 ---
 
-# Introduction
+# Introduction {#sec:intro}
 
 When a population is subdivided across multiple habitats with different 
 environmental conditions, the extent to which distinct subpopulations can
 maintain locally beneficial genetic variants depends on the rate of migration
-between these subpopulations.
+between them.
 Migration between populations that maintain divergently selected alleles can
 lead to maladaptive gene flow, yielding a migration load (a reduction in mean
 fitness due to the influx of locally maladaptive genes) or may lead to loss
-of local adaptation altogether (so-called *swamping* by gene flow).
-While local adaptation may be due to a few conspicuous loci (e.g. industrial
-melanism in *Biston*; @hof2016), it is believed to typically be polygenic, with
-alleles of different effects responding to selection in the local environment
-at many loci spread across the genome [@bomblies2022; @stankowski2022;
-@westram2018].
+of local adaptation altogether (so-called *swamping* by gene flow) [e.g.
+@lenormand2002].
+While local adaptation may be driven by a few conspicuous loci (e.g. adaptive
+melanism in peppermoth [@hof2016] or pocket mice [@nachman2003]), it is believed
+to typically be polygenic, with alleles of different effect responding to
+selection in the local environment at many loci spread across the genome
+[@pritchard2010; @lecorre2012; @bomblies2022; @stankowski2022; @westram2018].
 When local adaptation is polygenic, migration from a population adapted to
-different environmental conditions will lead to linkage disequilibria (LD)
-among selected alleles (i.e. migrant alleles will tend to be found together in
-the genome), and the rate at which the invading locally deleterious alleles are
-eliminated by selection will be affected by such associations [@feder2012;
+different environmental conditions will produce linkage disequilibria (LD) at
+selected loci, and the rate at which individual invading locally deleterious
+alleles are eliminated will be affected by such associations [@feder2012;
 @yeaman2015; @sachdeva2022].
 This in turn will affect the equilibrium migration load and swamping thresholds
 for the loci under selection.
@@ -55,23 +60,38 @@ Neutral variation may also come to be associated with locally selected alleles,
 so that the latter constitute a 'barrier' to neutral gene flow, increasing
 neutral genetic differentiation (as quantified by $F_{ST}$ for instance) beyond the
 single locus neutral expectation.
-Such barrier effects due to divergent local adaptation may play an important
-role in the evolution of reproductive isolation, and hence speciation
-[@nosil2012]. 
 
-Despite mounting evidence that local adaptation is often polygenic in nature,
-little is known about the underlying genetic details: How many loci are
+Barrier effects due to divergent local adaptation at many loci may play an
+important role in the evolution of reproductive isolation, and hence speciation
+[@barton2020; @nosil2012].
+The colonization of a new habitat by some species will often involve selection
+on polygenic traits and give rise to a subpopulation that exhibits some
+divergence from it ancestors [@barton2018].
+Conditional on the initial succesful establishment of such a subpopulation by
+polygenic adaptation, whether or not speciation ensues depends on the extent to
+which local adaptation can be maintained in the face of maladaptive gene flow,
+and to what extent the partial reproductive isolation deriving from local
+adaptation may promote further divergence and strengthen reproductive
+isolation, either through reinforcement, the accumulation of intrinsic
+incompatibilities, or the establishment of additional locally beneficial
+mutations [@barton2009; @kulmuni2020].
+In this paper, we focus on the first of these questions, and investigate the
+conditions under which polygenic local adaptation can be maintained in the face
+of maladaptive gene flow.
+
+Despite mounting evidence that local adaptation is indeed often polygenic in
+nature, little is known about the underlying genetic details: How many loci are
 involved? What are the typical effect sizes? Are locally beneficial alleles
 typically closely linked (forming so-called 'genomic islands'), or are they
-spread all over the genome? How non-additive is local adaptation? *etc.*
-[e.g. @yeaman2015; @bomblies2022].
-Moreover, even assuming such details to be known, it is unclear to what extent
+spread all over the genome? How non-additive is local adaptation? *etc.* [e.g.
+@yeaman2011b; @yeaman2015; @bomblies2022].
+Moreover, even if such details were known, it remains unclear to what extent
 the genetic architecture of local adaptation affects the ability of a
 population to maintain reproductive isolation in the face of gene flow.
-Conversely, it remains unclear just to what extent one could hope to infer the
-detailed genetic architecture underlying local adaptation from observed
-patterns of genomic differentiation, as for instance obtained through so-called
-'genome scans'.
+The closely related question of how much scope there is to infer the detailed
+genetic architecture underlying local adaptation from observed patterns of
+genomic differentiation, as for instance obtained through so-called 'genome
+scans', also remains largely unanswered.
 So far, most theoretical developments have assumed rather simple genetic
 architectures, dealing with biallelic loci of equal additive effect (ignoring
 dominance and epistasis) that are either unlinked or uniformly spread along a
@@ -98,44 +118,10 @@ mailand-island and infinite-island models of population subdivision, assuming
 a haploid sexual life cycle and $L$ divergently selected loci of equal effect.
 Here we extend some of this work to investigate the effects of dominance and
 variation among selective effects on the maintenance of polygenic local
-adaptation and reproductive isolation in populations with a diploid or
-haplodiplontic life cycle, focusing on the mainland-island model.
+adaptation and the genetic architecture of reproductive isolation in
+populations with a diploid or haplodiplontic life cycle, focusing on the
+mainland-island model.
 
-All sexual organisms have a life cycle with a distinct haploid and diploid
-stage, with remarkable diversity in the relative duration and development of
-the two phases.
-The existence of a diploid phase entails that interactions between different
-alleles at a locus (genetic dominance) will generally affect phenotypic traits
-and hence fitness.
-The effects of dominance on equilibrium frequencies and swamping thresholds in
-the single locus mainland-island model are well known [@haldane1930VI;
-@nagylaki1975].
-Consider a diploid model (i.e. a model with no selection in the haploid phase),
-where the relative fitnesses of genotypes $A_0A_0:A_0A_1:A_1A_1$ are given by
-$1:1-hs:1-s$ and where we assume a proportion $m$ of the population is replaced
-by migrants of the $A_1A_1$ genotype each generation.
-For the case $h=0.5$ (no dominance, also referred to as codominance, or
-additivity), the equilibrium frequency $\tilde{p}$ of the locally beneficial
-$A_0$ allele decreases linearly from $1$ to $0$ as the rate of migration
-approaches the strength of selection on a single allele $\frac{s}{2}$.
-When local adaptation is due to a dominant allele (so that the invading allele
-acts recessively to reduce fitness on the island, i.e. $h=0$), the migration
-rate beyond which no polymorphism can be maintained is increased to $s$, while
-$\tilde{p}$ is decreased relative to the additive case as long as $m <
-s/4$.
-When local adaptation is due to a recessive allele ($h=1$), the model has two
-equilibria for the beneficial allele frequency, one stable equilibrium
-$\tilde{p}_+ > 1/2$ and one unstable equilibrium $\tilde{p}_- < 1/2$.
-The two equilibria collide at the critical migration threshold of $m_c = s/4$,
-beyond which swamping occurs for any initial frequency.
-Hence, for the recessive case, whether or not a polymorphism is attained
-depends not only on the migration rate (which should be at most $s/4$), but
-also on the history of the population: the island population cannot fix a new
-recessive beneficial variant, but an established recessive variant can be
-maintained upon secondary contact.
-All these phenomena were first noted by @haldane1930VI.
-A main goal of the present paper is to understand how this behavior is affected
-when we consider the polygenic case.
 
 A second question we aim to address is to what extent LD among alleles with
 different fitness and dominance effects protects weakly selected alleles in the
@@ -216,13 +202,16 @@ We assume symmetric mutation at a small constant rate $u$ per locus, occurring
 at meiosis.
 
 Individual-based simulations of this model are implemented in Julia [@julia]
-and the code is available at \hl{GitHub}.
+and the code is available at
+[`https://github.com/arzwa/MultilocusIsland`](https://github.com/arzwa/MultilocusIsland).
 In the following sections, we build up a theoretical approximation to this
-fairly general multilocus model, roughly as in @sachdeva2022.
+fairly general multilocus model, roughly as in @sachdeva2022, and validate the
+approximations by comparing numerical results against individual-based
+simulations.
 We first derive the dynamics at a single locus, considering both deterministic
 and stochastic models.
-Next, we derive an approximation to the effective migration rate in the
-multilocus system using a rather general argument based on the reproductive
+Next, we derive an approximation to the effective migration rate for the
+multilocus model using a rather general argument based on the reproductive
 value of migrant individuals.
 Lastly, we approximate the allele frequency dynamics of the multilocus model by
 plugging in the effective migration rate, which captures the effect of LD among
@@ -285,9 +274,9 @@ generations, involving two sampling stages: first we sample diploid genotypes
 from the random union of fitness-weighted haploid genotypes (@eq:mc1), next we
 sample haploid spores by randomly drawing gene copies from the diploid
 genotypes that survive diploid selection (@eq:mc2).
-This Markov chain model is readily extended to include mutation and migration.
 This model is akin to the standard Wright-Fisher (WF) model for a diploid
-or haploid population.
+or haploid population and is readily extended to allow for mutation and
+migration.
 Indeed, for the neutral case, it is easily seen that the model corresponds to a
 haploid WF model with variable population size, regularly alternating between
 $N$ and $2Nk$ gene copies.
@@ -410,8 +399,8 @@ g
     \label{eq:gff}
 \end{align}
 where, similarly, $s_{i,a} = s_{i1} + s_{i01}$.
-It is worth stressing that the gff is a function of the actual differentiation
-between the mainland and island population, and that although we assume
+It is worth stressing that the gff is a function of the differentiation
+between the mainland and island population, and that, although we assume
 migration is sufficiently rare, we do *not* assume that alleles of the type
 introduced by migrants are rare.
 We shall often highlight the dependence of the gff on the allele frequencies by
@@ -425,7 +414,7 @@ simplifies to
 \end{equation}
 where $\Ex[p]$ and $\Ex[pq]$ are the expected beneficial allele frequency and
 expected heterozygosity at any selected locus on the island.
-Note that in our applications $s_a < 0$, so that when the locally beneficial
+Note that in our applications $s_a \le 0$, so that when the locally beneficial
 allele is common ($p \approx 1$) and $Ls_a$ is appreciable, gene flow will
 indeed be reduced due to selection against migrants. 
 
@@ -553,18 +542,6 @@ To do so, we use the fixed point iteration outlined in @sec:fp.
 
 ## Barrier effect and swamping thresholds in the deterministic model
 
-![Equilibrium differentiation and swamping thresholds for the deterministic
-multilocus model. Equilibrium frequencies for increasing $Ls$ are shown for (A)
-the case of dominant local adaptation (recessive migrant alleles), (B) additive
-fitness effects and (C) recessive local adaptation. The thick lines show the
-stable equilibria for increasing $m/s$, whereas the dotted lines show unstable
-equilibria. The black dots mark the critical point beyond which swamping is
-obtained for any initial condition (in (C) the approximate expression discussed
-in the main text is used). The results for $Ls=0.01$ (gray lines) correspond to
-the single locus predictions. (D) Swamping thresholds for different degrees of
-dominance for increasing total barrier strength $Ls$. 
-](/home/arthur_z/vimwiki/build/img/2023-05-02/detdom.svg){#fig:detdom}
-
 We first analyze the deterministic multilocus model for a homogeneous barrier,
 where the fitness and dominance effects of all loci are the same.
 We shall assume the mainland to be fixed for the locally deleterious allele at
@@ -572,10 +549,10 @@ all loci.
 We only consider diploid selection here, with $s_{01} = -sh$ and $s_{11}
 = -s$, where $s$ is the selection coefficient against the locally deleterious
 allele, and $h=s_{01}/s_{11}$ is the dominance coefficient.
-Note that $h$ measures dominance of the mainland allele over the island allele,
-so that $h=1$ corresponds to a situation where the invading allele is fully
-dominant, or, equivalently, where the allele that confers local adaptation on
-the island is recessive.
+We emphasize that $h$ measures dominance *of the mainland (invading) allele
+over the island (locally beneficial) allele*, so that $h=1$ corresponds to a
+situation where the invading allele is fully dominant, or, equivalently, where
+the allele that confers local adaptation on the island is recessive.
 For the case where migration is at the haploid stage, restricting the analysis
 to diploid selection incurs no loss of generality, as haploid selection then
 simply amounts to a rescaling of the dominance and selection coefficients (see
@@ -585,17 +562,56 @@ with intensity $s_1$ will be $h_e = \frac{s_1+s_{01}}{2s_1+s_{11}}$, so that
 the effect of haploid selection is to pull $h_e$ towards the additive case
 ($h=1/2$).
 
+
+![Equilibrium differentiation and swamping thresholds for the deterministic
+multilocus model. Equilibrium frequencies for increasing $Ls$ are shown for (A)
+the case of dominant local adaptation (recessive migrant alleles), (B) additive
+fitness effects and (C) recessive local adaptation. The thick lines show the
+stable equilibria for increasing $m/s$, whereas the dotted lines show unstable
+equilibria. The black dots mark the critical point beyond which swamping is
+obtained for any initial condition (in (C) the approximate expression from
+@sec:supdet is used). The results for $Ls=0.01$ (gray lines) correspond to
+the single locus predictions. (D) Swamping thresholds for different degrees of
+dominance for increasing total barrier strength $Ls$. 
+](/home/arthur_z/vimwiki/build/img/2023-05-02/detdom.svg){#fig:detdom}
+
 In the homogeneous deterministic model, all loci have the same dynamics if the
 initial allele frequencies are equal.
 From @eq:odeme, we find that in that case, the frequency $p$ of the locally
-beneficial allele at any individual selected locus in an $L+1$ locus system
-must satisfy at equilibrium
+beneficial allele at any selected locus in an $L+1$ locus system must satisfy
+at equilibrium
 \begin{align}
    0 &= shpq + s(1-2h)pq^2 -mg[p]p 
    \label{eq:odeq} \\
    &\text{where }\quad g[p] = e^{-2Ls(hp + (1-2h)pq)}. \nonumber
 \end{align}
 We can solve this numerically for the equilibrium allele frequency.
+Note that if we set $g[p] = 1$, we recover the classical diploid single locus
+model, for which the equilibrium behavior is well understood [@haldane1930VI;
+@nagylaki1975].
+We briefly recapitulate the main results (see also @sec:mieq).
+For the case $h=0.5$ (no dominance, also referred to as codominance, or
+additivity), the equilibrium frequency $\tilde{p}$ of the locally beneficial
+allele decreases linearly from $1$ to $0$ as the rate of migration
+approaches the strength of selection on a single allele $s/2$.
+When local adaptation is due to a dominant allele (so that the invading allele
+acts recessively to reduce fitness on the island, i.e. $h=0$), the migration
+rate beyond which no polymorphism can be maintained is increased to $s$, while
+$\tilde{p}$ is decreased relative to the additive case as long as $m <
+s/4$.
+When local adaptation is due to a recessive allele ($h=1$), the model has two
+equilibria for the beneficial allele frequency, one stable equilibrium
+$\tilde{p}_+ > 1/2$ and one unstable equilibrium $\tilde{p}_- < 1/2$ as long as
+migration rate does not exceed $s/4$. When this critical threshold is passed,
+swamping occurs for any initial frequency.
+Hence, for the recessive case, whether or not a polymorphism is attained
+depends not only on the migration rate (which should be at most $s/4$), but
+also on the history of the population: the island population cannot fix a new
+recessive beneficial variant, but an established recessive variant can be
+maintained upon secondary contact. Similar bistable behavior occurs for partial
+recessivity as long as $h > 2/3$.
+
+We now consider how this equilibrium behavior is affected by LD.
 @Fig:detdom shows the equilibrium behavior for a number of example parameter
 sets.
 As expected, increasing the total strength of selection ($Ls$) increases the
@@ -605,10 +621,10 @@ strongly on dominance.
 In particular the effect is much more pronounced when local adaptation is due
 to recessive variants ($h=1$).
 In this case, the gff is at its minimum, and hence the impact of LD on
-migration-selection balance is strongest, when the deleterious allele is
-rare (@fig:gff).
+migration-selection balance is strongest, when deleterious allele are rare
+(@fig:gff).
 On the other hand, when the invading alleles are recessive ($h=0$), gene flow
-is not at all impeded when the deleterious allele is rare (the gff being near
+is not at all impeded when deleterious alleles are rare (the gff being near
 one).
 When $h<1/3$, the barrier strength, as measured by $g^{-1}$ [@barton1986],
 *increases* as the deleterious allele increases in frequency on the island (and
@@ -639,7 +655,7 @@ In the single locus model, arbitrary small frequencies of the locally
 beneficial allele can be maintained at migration-selection balance when $h <
 2/3$, whereas in the case of $h > 2/3$, a sharp swamping threshold is observed
 as the equilibrium frequency of the locally beneficial allele reaches some
-critical frequency $p_c \le 1/2$.
+critical frequency $p_c \le 1/2$ (@sec:mieq).
 @sachdeva2022 showed that such sharp thresholds for swamping also appear in
 the absence of dominance due to LD.
 LD both increases the critical migration rate ($m_c$) at which swamping occurs
@@ -652,19 +668,18 @@ adaptation is not strongly recessive) is roughly similar to the additive case,
 with critical behavior emerging as $Ls$ surpasses some critical value
 (@sec:supdet, @fig:pplot).
 However, the critical migration rate at which swamping occurs is only
-marginally affected by LD in the latter case for moderate levels of divergence
-($Ls < 2$, say).
+marginally affected by LD for moderate levels of divergence ($Ls < 2$, say).
 This is in sharp contrast with the case where local adaptation is due to
 strongly recessive alleles, where the critical migration increases rapidly with
 $Ls$.
 Importantly, the critical differentiation ($p_c$) level below which local
 adaptation collapses is very different for different degrees of dominance.
-In the additive case, one can show that $p_c = 1-1/Ls$ (@sec:supdet), so that
-arbitrary differentiation can be obtained at the critical point depending on
-$Ls$.
-For completely dominant local adaptation, however, $p_c$ increases from $0$ to
-$1/2$ as $Ls \rightarrow \infty$, whereas for recessive local adaptation, $p_c$
-increases from $1/2$ to $1$ as $Ls$ grows.
+In the additive case, one can show that critical behavior emerges as soon as
+$Ls > 1$ (@sec:supdet), in which case $p_c = 1-1/Ls$, so that arbitrary
+differentiation can be obtained at the critical point depending on $Ls$.
+For completely dominant local adaptation ($h=0$), however, $p_c$ increases from
+$0$ to $1/2$ as $Ls \rightarrow \infty$, whereas for recessive local
+adaptationi ($h=1$), $p_c$ increases from $1/2$ to $1$ as $Ls$ grows.
 This means, in particular, that for moderate levels of divergence, $Ls > 0.75$
 say, and large population sizes, one would not expect to see locally beneficial
 recessives at frequencies much below $0.8$, compared to $0.5$ for the single
@@ -677,64 +692,91 @@ affected because of what happens to the gff as differentiation decreases...}
 ## Accounting for drift and comparison to individual-based simulations
 
 While the deterministic analysis points towards important effects of dominance
-on equilibrium differentiation and swamping thresholds, it is important to
-assess whether we expect such effects to be as pronounced in finite
-populations.
-Indeed, @sachdeva2022 showed that, for small populations, the sharp thresholds
-for swamping predicted by the deterministic multilocus theory when $Ls$ is
-appreciable need not apply, and that the critical migration rate may be
-significantly reduced.
+on equilibrium differentiation and thresholds for swamping, it is important to
+assess to what extent these carry over to finite populations.
+Indeed, @sachdeva2022 showed that, for small effective population sizes, the
+sharp thresholds for swamping predicted by the deterministic multilocus theory
+(when $Ls$ is appreciable) need not apply, and that the critical migration rate
+may be significantly reduced.
 Furthermore, for all but the largest populations, the actually observed
 frequency of a locally adaptive allele (and hence differentiation between the
 mainland and island) at migration-selection-drift balance in the model as
 outlined in @sec:model may deviate substantially from the deterministic
 approximation, so that it becomes important to understand the *distribution* of
-allele frequencies.
-More pragmatically, it is hard to evaluate the accuracy of our approximations
-against simulations, as any individual-based simulation will necessarily
-exhibit the effects of genetic drift.
+allele frequencies on the island.
+Additionally, from a more pragmatic perspective, it is hard to evaluate the
+accuracy of our approximations against simulations, as any individual-based
+simulation will necessarily exhibit the effects of genetic drift.
 
-![
-Predicted allele frequency distributions for the diploid multilocus model with
-homogeneous selective effects for different values of $N_e$ and $h$ (dominance
-coefficient of the invading alleles). Lines show the numerical approximations
-based on the diffusion theory, dots show results from individual-based
-simulations, based on taking a sample every 10 generations for 50000
-generations after an initial 10000 generations to reach equilibrium.
-Other parameter settings are $Ls = 0.8, L=40, m/s=0.2, u=0.005s$.
-](/home/arthur_z/vimwiki/build/img/2023-05-03/domdriftdist.svg){#fig:driftdist}
+![Effect of genetic drift, dominance and total barrier strength on equilibrium
+adaptive differentiation for a homogeneous polygenic barrier in a diploid
+population.
+(A)
+Predicted allele frequency distributions for a single locus in the diploid
+multilocus model with homogeneous selective effects for different values of
+$N_e$ and $h$ (dominance coefficient of the invading alleles).  Lines show the
+numerical approximations based on the diffusion theory, dots show results from
+individual-based simulations, based on taking a sample every 10 generations for
+50000 generations after an initial 10000 generations to reach equilibrium.
+In these simulations, $s = 0.02$, $Ls = 1$ and $u/s = 0.005$.
+(B)
+The expected frequency of the locally beneficial allele ($\Ex[p]$)
+is shown as a function of $N_es$ and $m/s$ for different values of $Ls$ (from
+left to right, $Ls = 0.5, 1, 1.5, 2$) and $h$ (from top to bottom, $h=0, 0.5,
+1$). All results assume $s=0.02$ and $u/s=0.005$. 
+](/home/arthur_z/vimwiki/build/img/2023-06-17/drift-homo-ep-af.svg){#fig:drifthm}
 
-Similar to @sachdeva2022, we find that the heuristic multilocus diffusion
-approximation obtained by substituting $m_e$ for $m$ in the single-locus
-diffusion theory yields remarkably accurate predictions to the multilocus model
-outlined in @sec:model.
+Similar to @sachdeva2022, we find that substituting $m_e$ for $m$ in the
+single-locus diffusion theory (@sec:dynamics) yields a remarkably accurate
+approximation to simulations of the multilocus model outlined in @sec:model.
 Indeed, even in parameter regimes where the approximation is expected to break
 down ($Ls$ appreciable with $L$ small and $s$ large, small population size) we
 obtain good predictions (@fig:Lsdom).
 Not only can we reliably obtain the expected frequency of alleles on the
 island, we also obtain very good predictions for the entire allele frequency
-distribution as observed in individual-based simulations (@fig:driftdist).
+distribution as observed in individual-based simulations (@fig:drifthm A).
 The sharp swamping thresholds observed in the deterministic model, in
 particular with recessive local adaptation ($h=1$), correspond to strongly
 bimodal allele frequency distributions in the model with drift.
 As described in more detail in @sec:init, this may render our numerical
-approaches sensitive to the initilization of the island population.
+approaches sensitive to the assumed initial state of the island population.
+This sensitivity is itself biologically relevant, corresponding to assumptions
+on the (recent) history of the populations considered at equilibrium.
 Throughout, we shall assume a scenario of secondary contact, so that the island
-starts as fixed for the locally beneficial allele at all loci.
+starts as fixed for the locally beneficial allele at all loci. 
 
-The general effects of genetic drift are as expected, in that the barrier
-effect is considerably reduced as $N_e$ decreases (@fig:drift).
-The characteristic effects of dominance hence only become apparent for
-appreciable $N_e$.
-For large population sizes, we now see clearly that for dominant local
-adaptation (invading alleles are (partially) recessive, $h<0.5$), two phases
-can be distinguished as the migration rate increases.
+For a homogeneous genetic architecture, the swamping threshold at any
+individual locus depends on the total barrier strength $Ls$, the dominance
+coefficient $h$, and the strength of selection relative to drift $N_es$.
+Concomitantly, for any given migration rate $m$, these three key parameters
+will determine jointly whether significant adaptive differentiation is to be
+expected at a particular locus, as we show in @fig:drifthm (B).
+Unsurprisingly, the general consequence of genetic drift is to reduce the
+barrier effect, hence decreasing the expected differentiation at equilibrium
+(@fig:drift; @fig:drifthm B).
+Swamping thresholds are both decreased and made less sharp by drift, and the
+detailed behavior depends on the dominance coefficient.
+Whereas for dominant local adaptation the effect of drift on the critical $m/s$
+value decreases markedly for $N_es > 20$, for the additive case this happens,
+roughly, for $N_es > 10$.
+For substantial $N_es$ (e.g. $N_es=16$ in @fig:drift), we now see clearly that
+for dominant local adaptation (invading alleles are (partially) recessive,
+$h<0.5$), two phases can be distinguished as we consider increasing migration
+rates.
 As noted above, the barrier strength increases initially as migration
 increases, so that as long as the deleterious allele is below some frequency
-determined by $h$, the equilibrium differentiation declines less fast with
-increasing $m$. Once a threshold frequency is reached, the barrier strength
-declines again as $m$ increases (@fig:drift $h=0$ and $h=0.25$ panels).
-\hl{perhaps not worth to spell out.}
+determined by $h$, the rate at which equilibrium differentiation declines with
+increasing $m$ decreases.
+Once a threshold frequency is reached, the barrier strength starts to decline
+again with increasing $m$ (@fig:drift, $h=0$ and $h=0.25$ panels).
+As in the deterministic analysis above, this behavior is in sharp contrast with
+the case of recessive local adaptation, where the positive feedback between the
+gff and the frequency of the locally deleterious allele ($q$) gives rise to
+sharp thresholds for swamping even when drift is quite strong (e.g. $N_es =
+4$).
+
+
+## Selection in both the haploid and diploid phase
 
 ![Multilocus migration-selection balance and swamping with dominance and
 haploid selection.
@@ -746,31 +788,40 @@ Specifically, we assume $s_1 = -(1-\tau)s, s_{01} = -h\tau s$ and $s_{11} =
 Other parameters were as follows: $Ls =0.8, L=40, N_es=8, k=5, u=s/100$.
 ](/home/arthur_z/vimwiki/build/img/2023-04-19/domtau.svg){#fig:domtau}
 
-We now consider in more detail to what extent our approximations apply to the
-case with both selection in the haploid and diploid phase.
-In @fig:domtau, we parameterize the model in such a way that we can
-investigate, for a given total barrier strength (corresponding to the fitness
-difference between an island population fixed for the locally beneficial and an
-island fixed for the locally deleterious allele) the effects of the relative
-strength of selection in the diploid and the haploid phase and the degree of
-dominance in the diploid phase.
+We now consider in more detail the accuracy of our approximations when
+selection acts both in the haploid and diploid phase.
+We parameterize the general model in such a way that we can investigate, for a
+given total barrier strength 
+(corresponding to the fitness difference between an island population fixed for
+the locally beneficial and an island fixed for the locally deleterious allele),
+the effects of the relative strength of selection in the diploid and the
+haploid phase and the degree of dominance ($h$) in the diploid phase.
 To this end, we assume
-\begin{align*}
+\begin{align}
    s_1 = -(1-\tau)s & & s_{01} = -h\tau s & & s_{11} = -\tau s,
-\end{align*}
+   \label{eq:hapdipmodel}
+\end{align}
 where $0 \le \tau \le 1$ measures the relative strength of selection in the
 diploid phase (if one assumes selection to operate continuously with constant
 intensity throughout the life cycle, this can be interpreted as the relative
 length of the diploid phase).
-Similar models have appeared in the study of life cycle modifiers, see for
-instance, @otto1994 and @scott2017.
-Using this parameterization, we find that when selection is not too strong, we
-can indeed accurately predict equilibrium frequencies for haplodiplontic life
-cycles where selection occurs in both the haploid and diploid phase.
-Furthermore, these results suggest that, for a given total strength of
-selection, predominantly haploid populations should be able to maintain more
-adaptive variation, and exhibit stronger reproductive isolation, irrespective
-of the degree of dominance in the diploid phase.
+Similar models have appeared in the study of life cycle modifiers [e.g.
+@otto1994; @scott2017].
+Recall furthermore that we assume a regular alternation of $N$ haploid and $Nk$
+diploid individuals.
+We find that we can indeed accurately predict equilibrium allele frequencies
+for haplodiplontic life cycles with selection in both phases using the
+diffusion theory (@fig:domtau).
+We emphasize that the diffusion approximation depends only on $N, k, s, h$ and
+$\tau$ through $N_es_e = N_e(2-\tau)s$ and $h_e = s_e^{-1}(1 - \tau(1-h))$,
+showing that, at least for weak selection, life cycle details can be
+accounted for by means of a set of suitable effective parameters
+(@fig:hapdipeff).
+
+The results displayed in @fig:domtau suggest furthermore that, for a given
+total strength of selection $Ls$, predominantly haploid populations should be able
+to maintain more adaptive variation, and exhibit stronger reproductive
+isolation, irrespective of the degree of dominance in the diploid phase.
 Although haploid selection pulls the effective dominance coefficient towards
 $0.5$ (so that one might expect, based on our results for diploids above, that
 a diploid phase with recessive local adaptation would enable more adaptive
@@ -781,26 +832,234 @@ The relevance of these observations for the evolution and maintenance of
 haplodiplontic life cycles is however not very clear, as a life cycle modifier
 need not keep the overall strength of selection constant [@scott2017].
 
+\hl{Perhaps not without interest to consider to what extent these results are
+affected when migration is in the diploid phase or at the end of the haploid
+phase? Does spore dispersal give an advantage when it comes to maintaining
+local adaptation?}
+
 ## Heterogeneous genetic architectures
 
-![
-Predicted equilibrium allele frequencies for increasing migration rates (left)
-and frequency distributions (right) for six loci in a $L$-locus multilocus
-barrier in a diploid system, where $s \sim \Exp(\bar{s}=0.02)$ and $h \sim
-\Beta(1,1)$. Lines show predictions from the multilocus diffusion
-approximation, whereas dots show results from individual-based simulations
-(simulating for 200000 generations after an initial 10000, sampling every 10th
-generation).
-\label{fig:het}
-](/home/arthur_z/vimwiki/build/img/2023-05-04/exhet2.svg){width=80%}
-
+We now depart from the unrealistic assumption of equal effects and dominance
+coefficients across the polygenic barrier.
 In @sec:ml, we developed the multilocus theory for potentially heterogenous
-unlinked architectures, where the $s_1, s_{01}$ and $s_{11}$ can vary
-arbitrarily across loci.
-We verify that we obtain accurate predictions also in this setting, using
-simulations with randomly sampled selection and dominance coefficients
-(@fig:het).
+(unlinked) genetic architectures, where the selection coefficients $s_1, s_{01}$
+and $s_{11}$ can vary arbitrarily across loci, and we verify that we do indeed
+obtain accurate predictions also in this setting (@fig:het).
+This allows us to address in more detail a number of questions pertaining to
+the genetic architecture of local adaptation at migration-selection balance,
+accounting for both LD and genetic drift.
+The scenario we envisage is the following: at some point in time, the island is
+colonized by individuals from the mainland and rapid adaptation to the local
+conditions from the standing genetic variation (by driving all $L$ locally
+beneficial alleles to high frequencies on the island) ensues.
+After this initial idealized phase of directional selection on standing
+variation, we assume a situation of secondary contact, where migration at rate
+$m$ introduces mainland genotypes, and the island evolves to an equilibrium
+state.
+We then ask what sort of loci can contribute to local adaptation and how the
+resulting partial reproductive isolation is manifested in observable allelic
+differentiation.
+We also consider to what extent selective interference among loci results in
+departures from single locus predictions. 
+We emphasize that we do not explicitly consider the buildup of divergence
+between the mainland and island population, nor some plausible model for what
+sort of standing variation is the source of the initial polygenic response, but
+merely ask how the genetic architecture of local adaptation affects observable
+patterns of adaptive differentiation.
 
+![
+Effect of an additive polygenic barrier of strength $Ls$ on the equilibrium at
+a focal unlinked locus. The top and bottom rows show the case of a completely
+recessive ($h=1$) and completely dominant ($h=0$) locally adaptative variant
+with homozygous effect $s_f$ respectively. The left column shows the expected
+equilibrium frequencies of the locally beneficial allele at the focal locus
+(heavy lines) and at a locus in the additive background polygenic barrier
+(transparent lines) for increasing strength of migration. The black line shows
+the single locus prediction (i.e. in the absence of the additive polygenic
+barrier). The right column shows the associated allele frequency distributions
+at equilibrium for the focal locus when selection (at the focal locus) is six
+times as strong as migration.
+](/home/arthur_z/vimwiki/build/img/2023-06-07/focallocus.svg){#fig:focal}
+
+Several questions emerge when considering such a scenario.
+Firstly, one can ask to what extent the equilibrium differentiation at a single
+focal locus is affected by LD with a barrier of some strength.
+In particular, single locus theory indicates a strong effect of dominance on
+the ability to maintain local adaptation for a given migration rate.
+For instance, as already remarked by @haldane1930VI, a single recessive locus
+conferring local adaptation is rather sensitive to swamping unless its
+selective effect is relatively large (at least $4m$ in an infinite population).
+However, in the more plausible case where local adaptation has at least a
+partly polygenic basis, it becomes important to understand to what extent LD
+with other barrier loci assists in maintaining adaptive differentiation and
+increasing swamping thresholds at such loci.
+In @fig:focal, we consider the cases of a recessive ($h=1$) and dominant
+($h=0$) locally adaptive variant of relatively large homozygous effect ($s_f =
+0.05$) in the presence of an additive multilocus barrier with total selective
+effect $Ls$.
+Clearly, as $Ls$ becomes appreciable, equilibrium frequencies at the focal
+locus start to deviate substantially from the single locus prediction whenever
+the migration rate is below the swamping threshold of the loci in the additive
+polygenic 'background' barrier.
+In the case with recessive local adaptation, LD also strongly affects the
+critical migration rate at the focal locus, and once the swamping threshold for
+the additive background loci exceeds that of the focal locus (in this example
+at $Ls \ge 1$), the latter is essentially increased to that of the additive
+background loci.
+Clearly, Haldane's (1930) remark that, for a recessive, "if $s$ is not much
+greater than $4m$, a chance fluctuation may push the population past the point
+of unstable equilibrium, and the recessives be finally eliminated" does not
+straightforwardly apply in the polygenic setting, where LD can have a
+considerable protective effect and render recessives more robust to
+swamping, even when selected loci are unlinked.
+
+We next consider fully heterogeneous barriers, where all $L$ loci have
+different fitness effects. We are particularly interested in (1) the extent of
+selective interference among loci due to LD, which can be quantified by
+comparing our multilocus prediction against single locus theory, (2) the
+relative contribution of different types of loci to the genome-wide barrier
+effect and (3) how different assumptions on the distribution of fitness effects
+(DFE) yield different patterns of genome-wide adaptive differentiation.
+
+![
+Variation among selective effects weakens polygenic barriers.  (A) The boxplots
+show the expected per-locus differentiation across the $L$-locus barrier
+($L=100$) across 50 replicate simulations of an additive polygenic barrier
+where selection coefficients are distributed according to a $\Gam(\kappa,
+\kappa/\bar{s})$ distribution, with $\Ex[s] = \bar{s} = 0.01$ and six different
+values of $\kappa$.
+The solid horizontal line shows the predicted equilibrium differentiation per
+locus for a homogeneous barrier of strength $L\bar{s}$, whereas the dashed line
+shows the single locus prediction for a diploid locus with $s = \bar{s}$.
+The colored lines show the average differentiation across the barrier predicted
+using single locus theory $\sum_i^L{\Ex[p_i|s_i]}/L$, averaged over replicate
+simulations.
+(B) Density functions for the six different Gamma distributions used in (A).
+(C) Expected beneficial allele frequencies across the barrier in a single
+simulation replicate for each of the six assumed distributions, sorted by
+allele frequency, assuming $m/\bar{s} = 0.1$ (horizontal lines as in (A);
+colors as in (A) and (B)). Other parameters are $N_e\bar{s} = 10$,
+$u=\bar{s}/200$.
+](/home/arthur_z/vimwiki/build/img/2023-06-22/gammas2.svg){#fig:gammas}
+
+Let us first consider the case with variable selection coefficients, assuming
+no dominance.
+In @fig:gammas, we show the average differentiation per selected locus in
+randomly simulated polygenic barriers ($L=100$) with Gamma distributed
+selection coefficients.
+Increasing the variance in selective effects, while keeping $\Ex[s] = \bar{s}$
+constant, yields on average weaker barriers, systematically yielding lower
+equilibrium frequencies than a homogeneous barrier of strength $L\bar{s}$, and
+often yielding, on average, lower per-locus differentiation than a single locus
+selected against with intensity $\bar{s}$.
+Given that the distribution of selection coefficients is generally believed to
+be at least somewhat leptokurtic, these results suggest that heterogeneity in
+selection coefficients has important consequences for observable
+differentiation at migration selection-balance which would not adequately be
+captured by substituting an average selection coefficient in either single
+locus or multilocus theory.
+Keeping selection coefficients fixed while sampling dominance coefficients from
+a Beta distribution with mean $0.5$ and increasing variance has less dramatic
+effects, although we do see systematic increases and decreases in equilibrium
+differentiation depending on whether the migration rate exceeds the swamping
+threshold for recessives (which are associated with higher equilibrium
+frequencies) or not (@fig:betas).
+
+![Deviation of predicted allele frequencies for $L=100$ loci with varying
+selective effects and dominance coefficients when accounting for LD
+(multilocus) from predictions based on single locus diffusion theory.
+The columns show results for different total strengths of selection
+($L\bar{s}$), whereas the rows show results for increasing rates of migration
+relative to selection ($m/\bar{s}$). We assume the $s_i$ to be exponentially
+distributed with mean $\bar{s}$ and dominance coefficients are sampled
+uniformly from the $[0,1]$ interval. Each dot is associated with a single locus
+in the barrier, and is colored according to its dominance coefficient.
+Each plot combines results for 10 independently sampled genetic architectures
+(i.e. there are $L\times 10 = 1000$ data points in each plot). Other parameters
+include $N_e\bar{s} = 8$ and $u/\bar{s} = 0.005$.
+\label{fig:diffdetail}
+](/home/arthur_z/vimwiki/build/img/2023-06-09/diffdetail.svg){width=65%}
+
+If we compare the expected differentiation at any particular locus in a
+heterogeneous polygenic barrier to the single locus prediction for that locus,
+we find that depending on $L\bar{s}, N_e\bar{s}$ and $m$, the single locus
+prediction may be off by quite a lot.
+Assuming selection and dominance coefficients to be independently distributed
+according to an Exponential and Uniform distribution respectively (see
+@sec:dfe); we find that, when $L\bar{s}$ is not small ($>0.5$, say), for large
+parts of parameter space, single locus predictions underestimate the extent of
+differentiation by more than 10% on average across loci, and depending on the
+extent of drift and the total strength of selection, predictions can be off by
+40% (@fig:randdiff).
+Considering in more detail how different loci across the barrier behave at
+migration-selection balance in the polygenic regime, we find that, as expected,
+the error of the single locus prediction is largest for locally beneficial
+recessives, where it can be as large as 90% for (@fig:diffdetail).
+The error of the single locus model for dominant variants is considerably less.
+
+This does however not imply that, on the whole, recessives necessarily
+contribute more to local adaptation at migration-selection balance than
+dominant alleles do. Although strongly selected recessives will show very
+strong divergence, more weakly selected recessive alleles may be much more
+prone to swamping than partially dominant ones.
+One way to quantify this is by considering, for some DFE model, the conditional
+probability density for the selection and dominance coefficient, given that a
+divergent allele is observed on the island, i.e.
+\begin{align*}
+  f(s_i,h_i|X_i=1) 
+  &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
+  \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB
+\end{align*}
+where $X_i$ is an indicator random variable (equalling 1 when a locally
+beneficial allele is observed at locus $i$ and zero otherwise), $B$ is a
+shorthand for the selection and dominance coefficients at the $L-1$ other loci
+('$B$' for background), and we integrate over the set of all possible such
+backgrounds $\mathcal{B}$.
+We can can characterize this conditional probability density using a Monte
+Carlo approach by sampling random $L$-locus genetic architectures from a DFE
+model and calculating for each $(s_i,h_i)$ pair in the barrier the expected
+beneficial allele frequency $\Ex[p_i|s_i,h_i,b]$ as a weight.
+The weighted sample will be approximately distributed according to $f$.
+Using this stratgey for the exponential-
+
+
+
+## Discussion
+
+Speciation, in essence, amounts to the buildup and maintenance of linkage
+disequilibria [@felsenstein1981], with different sets of alleles maintained in
+different subpopulations.
+Heterogeneous selection and drift across different subpopulations contributes
+to the buildup of LD, whereas migration and recombination break up patterns of
+LD.
+In this paper, we have focused on the maintenance of reproductive isolation in
+the face of gene flow in a secondary contact scenario, where we have ignored
+the details of how the initial LD was built up by selection and drift.
+We have also ignored that other contribution to LD, physical linkage, having 
+assumed free recombination among loci under divergent selection.
+Of key importance is that, in the presence of selection, the rate at which
+patterns of LD are broken up due to migration and recombination is not
+independent of the magnitude of LD.
+Selection against migrant genotypes eliminates sets of alleles jointly, leading
+to a more efficient maintenance of locally beneficial genotypes in the face of
+migration [@sachdeva2022].
+The effects of polygenic selection against migrant genotypes can be accurately
+captured by the gene flow factor, which quantifies the (potentially quite strong)
+selection against migrant genotypes and the rapid break up of LD among
+surviving invading alleles.
+In the polygenic setting, the gff is excellently approximated by the expected
+reproductive value of a migrant individual in the resident population, where
+the key parameter in the additive (and haploid) case is $Ls$, or the total
+strength of selection across all selected loci.
+
+In this paper, we derived an expression for the gff in a diploid or
+haplodiplontic mainland-island model, showing how the maintenance of adaptive
+differentiation in the face of gene flow depends jointly on the extent of LD
+and dominance.
+
+Recent findings such as those of @stankowski2022 emphasize that readily
+discovered large-effect loci may often be associated with a polygenic
+background that is less clearly associated with divergent selection.
 
 # References
 <div id="refs"></div>
@@ -867,12 +1126,79 @@ $n$ replicates so that $nL = 50$. The mutation rate was set to $u=0.005s$.
 
 
 ![
+Predicted allele frequency distributions for a single locus in the diploid
+multilocus model with homogeneous selective effects for different values of
+$N_e$ and $h$ (dominance coefficient of the invading alleles).
+Lines show the numerical approximations based on the diffusion theory, dots
+show results from individual-based simulations, based on taking a sample every
+10 generations for 50000 generations after an initial 10000 generations to
+reach equilibrium.
+Other parameter settings are $Ls = 0.8, L=40, m/s=0.2, u=0.005s$.
+](/home/arthur_z/vimwiki/build/img/2023-05-03/domdriftdist.svg){#fig:driftdist}
+
+![
 Effect of drift on equilibrium differentiation and swamping thresholds for
 a range of dominance values $h$, ranging from overdominant local adaptation
 $h=-1$ (hybrids have an advantage), to underdominant local adaptation $h=2$
 (hybrids perform worse than mainland individuals on the island). All results
 use $L=40, Ls=0.8, k=5$.
 ](/home/arthur_z/vimwiki/build/img/2023-05-03/domdrift.svg){#fig:drift}
+
+![Effect of genetic drift, dominance and total barrier strength on equilibrium
+adaptive differentiation for a homogeneous polygenic barrier in a diploid
+population.
+As in @fig:drifthm, but highlighting the $Ls$ by $N_es$ interaction for several
+values of $m/s$.
+](/home/arthur_z/vimwiki/build/img/2023-06-17/drift-homo-ep.svg){#fig:drifthm1}
+
+![Effect of genetic drift, dominance and total barrier strength on equilibrium
+adaptive differentiation for a homogeneous polygenic barrier in a diploid
+population.
+As in @fig:drifthm, but highlighting the $Ls$ by $m/s$ interaction for several
+values of $N_es$.
+](/home/arthur_z/vimwiki/build/img/2023-06-17/drift-homo-ep2.svg){#fig:drifthm3}
+
+![
+Effective parameters accurately describe equilibrium dynamics for
+haplodiplontic populations when selection is sufficiently weak.
+The line shows the numerical prediction of the locally beneficial allele
+frequency on the island for increasing strength of migration relative to
+*effective* selection. The dots show results from individual based simulations
+with different degrees of haploid vs. diploid selection and different relative
+sizes of the haploid and diploid population, keeping $N_e, s_e$ and $h_e$
+however constant.
+Simulation results are based on 110000 generations, where we sampled every 10th
+generation after discarding the first 10000 generations.
+](/home/arthur_z/vimwiki/build/img/2023-06-17/hapdipeff.svg){#fig:hapdipeff}
+
+![
+Predicted equilibrium allele frequencies for increasing migration rates (left)
+and frequency distributions (right) for six loci in a $L$-locus multilocus
+barrier in a diploid system, where $s \sim \Exp(\bar{s}=0.02)$ and $h \sim
+\Beta(1,1)$. Lines show predictions from the multilocus diffusion
+approximation, whereas dots show results from individual-based simulations
+(simulating for 200000 generations after an initial 10000, sampling every 10th
+generation). The frequency distributions are shown for $m/\bar{s} = 0.2$.
+\label{fig:het}
+](/home/arthur_z/vimwiki/build/img/2023-05-04/exhet2.svg){width=80%}
+
+![
+As in @fig:gammas, but now keeping the selection coefficient fixed at $\bar{s}
+= 0.01$ and using randomly sampled dominance coefficients, from a symmetric
+Beta distribution with parameter $\alpha$. Again, $L=100, N_es = 10,
+u/s=0.005$.
+](/home/arthur_z/vimwiki/build/img/2023-06-22/betas.svg){#fig:betas}
+
+![Average difference in predicted allele frequency for the single locus vs.
+multilocus model. We assume $L=100$, $s_i \sim \Exp(\bar{s})$ and $h_i \sim
+\Beta(1,1)$ for $i=1,\dots,L$. We show $\frac{1}{L}\sum_{i}^L |\Ex[p_{i,L}] -
+\Ex[p_{i,\text{single}}]|$ where $p_{i,L}$ and $p_{i,\text{single}}$ are the
+equilibrium frequency of the locally beneficial allele at locus $i$ in the
+multilocus model and single locus model respectively.
+The results are averaged across 10 random $L$-locus barriers. We show results
+for different strengths of genetic drift ($N_e\bar{s}$).
+Note that values of $L\bar{s}$ range from 0.5 to 2 ($y$-axis). 
+](/home/arthur_z/vimwiki/build/img/2023-06-21/driftdiff.svg){#fig:randdiff}
 
 \clearpage
 
@@ -1103,99 +1429,6 @@ In the diploid case with the usual parameterization where $s_a = -sh$ and $s_b
 2/3$.
 
 
-
-## Two-locus haplodiplontic mainland-island model \label{sec:twolocus}
-
-We here consider the deterministic dynamics of a two-locus haplodiplontic
-model with mainland-island migration in continuous-time.
-We assume a locus $A$ with alleles $A_0$ and $A_1$ and a linked locus $B$ with
-alleles $B_0$ and $B_1$, with recombination between the two loci occurring at
-rate $r$.
-We assume arbitrary dominance and no epistasis, with relative Malthusian
-fitnesses of all possible two-locus genotypes in the two phases given by the
-following tables
-\begin{equation}
-\begin{matrix}
-\text{Haploid} & & \\
-& B_0 & B_1 \\
-A_0 & 0     & \beta_1  \\
-A_1 & \alpha_1 & \alpha_1 + \beta_1 
-\end{matrix} \qquad \qquad 
-\begin{matrix}
-\text{Diploid} & & & \\
-& B_0B_0 & B_0B_1 & B_1B_1 \\
-A_0A_0 & 0     & \beta_{01} & \beta_{11} \\
-A_0A_1 & \alpha_{01} & \alpha_{01} + \beta_{01} & \alpha_{01} + \beta_{11} \\
-A_0A_1 & \alpha_{11} & \alpha_{11} + \beta_{01} & \alpha_{11} + \beta_{11}
-\end{matrix}
-\end{equation}
-Similar to our notation for the single-locus case, we let $\alpha_a = \alpha_1
-+ \alpha_{01}$ and $\alpha_b = \alpha_{11} - 2\alpha_{01}$ (and similarly for
-$\beta_a$ and $\beta_b$).
-Let $x_{ij}$ and $y_{ij}$ denote the frequency of the $A_iB_j$ haplotype on the
-island and mainland respectively. The two-locus dynamics in continuous-time are
-given by
-\begin{equation}
-\dot{x}_{ij} = m(y_{ij} - x_{ij}) + (\omega_{ij} - \bar{\omega})x_{ij} - \eta_{ij} rD 
-\label{eq:ode-haplotype}
-\end{equation}
-where $D = x_{00}x_{11} - x_{01}x_{10}$ is the usual measure of linkage
-disequilibrium, $\omega_{ij}$ the marginal fitness of the $A_iB_j$ haplotype,
-$\bar{\omega}$ the mean Malthusian fitness and $\eta_{ij} = 1$ when $i=j$ and
-$-1$ otherwise.
-Defining
-\begin{align*}
-  Q_A &= \alpha_a + \alpha_bq_A &
-  Q_B &= \beta_a + \beta_bq_B \\
-  P_A &= \alpha_a + \alpha_bp_A & 
-  P_B &= \beta_a + \beta_bp_B,
-\end{align*}
-one can find that $\bar{\omega} = q_AQ_A + q_BQ_B$ and write the marginal
-fitnesses as
-\begin{align}
-  \omega_{00} - \bar{\omega} &= -q_AQ_A - q_BQ_B \nonumber \\
-  \omega_{01} - \bar{\omega} &= \beta_a -q_AQ_A - q_BP_B \nonumber \\
-  \omega_{10} - \bar{\omega} &= \alpha_a -q_AP_A - q_BQ_B \nonumber \\
-  \omega_{11} - \bar{\omega} &= \alpha_a + \beta_a -q_AP_A - q_BP_B.
-  \label{eq:twolocus-marg}
-\end{align}
-Let $p_A = x_{00} + x_{01}$ be the allele frequency of $A_0$ and 
-$p_B = x_{00} + x_{10}$ that of $B_0$, and let $q_A = 1-p_A$ and $q_B=1-p_B$.
-We shall assume that the mainland is fixed for haplotype $A_1B_1$ (i.e.
-$y_{11}=1$).
-Using @eq:twolocus-marg with @eq:ode-haplotype, one can derive the dynamics for
-$p_A, p_B$ and $D$:
-\begin{align}
-  \dot{p}_A &= -mp_A - p_Aq_AQ_A - Q_BD \nonumber \\
-  \dot{p}_B &= -mp_B - p_Bq_BQ_B - Q_AD \nonumber \\
-  \dot{D} &= m(p_Ap_B - D) + (Q_A(p_A-q_A) + Q_B(p_B - q_B))D - rD.
-  \label{eq:twolocus-ode}
-\end{align}
-
-We can use @eq:twolocus-ode to derive the effective migration rate at a neutral
-locus linked to a barrier locus maintained at migration-selection balance.
-Let $A$ be the selected locus, and $B$ the linked neutral locus.
-The dynamics of the system are given by @eq:twolocus-ode, where $Q_B = 0$.
-Assuming $r$ is sufficiently large (linkage is sufficiently weak) so that $D$
-equilibrates much faster than the allele frequencies, we can solve the system
-for $D$ at equilibrium to find
-  \begin{equation}
-  \tilde{D} = \frac{mp_Ap_B}{m+r-Q_A(p_A - q_A)}
-  \end{equation}
-We can plug this into the ODE for the neutral locus to find
-  \begin{equation}
-  \dot{p}_B = -m\left(1 + \frac{p_AQ_A}{m+r-Q_A(p_A-q_A)}\right)p_B
-  \label{eq:qle}
-  \end{equation}
-Suggesting that the effective migration rate under the stated assumptions
-should be
-  \begin{equation}
-  m_e = m\left(1 + \frac{p_AQ_A}{m+r-Q_A(p_A-q_A)}\right) 
-    \approx m\left(1 + \frac{p_AQ_A}{r}\right),
-  \end{equation}
-where the approximation holds well for weak linkage, which we assumed when we
-derived @eq:qle.
-
 ## Fixed point iteration algorithm  {#sec:fp}
 
 Our approximations yield a system of equations for the expected allele
@@ -1350,6 +1583,200 @@ equilibrium becomes questionable, where the state of the population after a
 large but finite time of evolution depends strongly on the detailed history of
 the population. 
 
+
+## Distribution of fitness effects (DFE) models \label{sec:dfe}
+
+![
+Joint distributions for an example of each of the three DFE models outlined in
+@sec:dfe. The joint probability density is shown on a logarithmic scale, with
+yellow marking high density and (deep) blue low density.
+The marginal density for the selection coefficient is a Gamma distribution with
+$\kappa = 2/3, 1, 3/2$ in the top, middle and bottom row respectively (see
+@sec:dfe for the relevant definitions).
+(A) Independent selection and dominance coefficients. (B) The logistic model
+with $a=9.2$ and $b=2$. (C) The CK94 model with $\bar{h} = 1/3$. \label{fig:dfejoint}
+](/home/arthur_z/vimwiki/build/img/2023-06-22/dfejoint.svg){width=70%}
+
+![
+Marginal distributions of $s$ and $h$ for the three example DFE model shown in
+@fig:dfejoint. \label{fig:dfemarg}
+](/home/arthur_z/vimwiki/build/img/2023-06-22/dfemarg.svg){width=70%}
+
+### Independent selection and dominance coefficients
+
+For the independent model, we assume, for $i=1,\dots,L$,
+\begin{align*}
+    s_i &\sim \Gam(\kappa, \lambda) \\
+    h_i &\sim \Beta(\alpha, \beta),
+\end{align*}
+where $\kappa$ is the shape parameter of the Gamma distribution, and $\lambda$
+the rate parameter (i.e. the Gamma distribution with density $f(s) =
+\Gamma(\kappa)^{-1}\lambda^{\kappa} s^{\kappa-1}e^{-\lambda s}$).  The mean is
+$\kappa/\lambda$, and smaller values of $\kappa$ yield a more leptokurtic
+distribution. For $\kappa = 1$, this reduces to the Exponential distribution
+with rate $\lambda$. See @fig:dfejoint (A) and @fig:dfemarg for examples.
+
+### Logistic model
+
+In the logistic model, we assume, for $i=1,\dots,L$,
+\begin{align*}
+    s_i &\sim \Gam(\kappa, \lambda) \\
+    \logit h_i |s_i &\sim \text{Normal}(a + b\log s_i,
+    \sigma^2),
+\end{align*}
+where $\logit h = \log\frac{h}{1-h}$ is the logit transform.
+In other words, we assume $h$ to be distributed according to a linear
+regression on $\log s$ with slope $a$ and intercept $b$, on a logit scale.
+The marginal density of $h$ is then
+  $$f(h) = \frac{1}{h(1-h)}\int_0^\infty \mathrm{N}[\logit h ; a +
+     b\log(s),\sigma] \mathrm{G}(s; \kappa, \lambda)ds\ ,$$
+where $\mathrm{N}(\cdot; \mu, \sigma)$ and $\mathrm{G}(\cdot;\kappa,\lambda)$
+denote the density functions for the Normal distribution (with mean $\mu$ and
+standard deviation $\sigma$) and Gamma distribution respectively.
+Instead of setting the $a$ and $b$ parameters directly, we parameterize the
+regression by choosing two reference pointst, $s^{(1)}$ and $s^{(2)}$, together
+with their respective expected dominance coefficients $h^{(1)} =
+\Ex[h|s^{(1)}]$ and $h^{(2)}= \Ex[h|s^{(2)}]$ using
+\begin{align*}
+    b &= \frac{\logit h^{(2)} - \logit h^{(1)}}{\log s^{(2)} - \log s^{(1)}} \\
+    a &= \logit h^{(1)} - b\log s^{(1)}
+\end{align*}
+This model is also illustrated in @fig:dfejoint (B) and @fig:dfemarg.
+
+### Model after @caballero1994 
+
+In the model of @caballero1994 (see also @zhang2004 and discussion in
+@agrawal2011), referred to as CK94, we assume
+\begin{align*}
+    s_i &\sim \Gam(\kappa, \lambda) \\
+    h_i^\ast | s_i &\sim \text{Uniform}(0,e^{-Ks}) \\
+    h_i &= 1 - h_i^\ast
+\end{align*}
+It should be noted that this distribution is supposed to be a reasonable model
+for dominance coefficients of deleterious mutations at mutation-stabilizing
+selection equilibrium, where mutations of large effect segregating at
+appreciable frequencies tend to be recessive.
+In our case, we regard this as the distribution of dominance coefficients of
+*mutant* alleles on the *mainland* that constitutes the standing variation
+which is the source of locally adaptive alleles during the initial polygenic
+response (which we do not explicitly model).
+These are hence the dominance coefficients of the locally *beneficial* alleles
+on the *island* (assuming dominance coefficients to be constant across
+environments and genetic backgrounds).
+The $h_i$ as we defined them are however the dominance coefficients of the
+invading wild-type alleles from the mainland over the locally beneficial ones,
+so that we use $h_i = 1-h_i^\ast$ where the $h_i^\ast$ are distributed
+according to the CK94 model.
+We set the $K$ parameter so that $\Ex[h^\ast] = \bar{h}$ for some $\bar{h}$, i.e.
+  $$K =  \lambda \left((2\bar{h})^{-\frac{1}{\kappa}} - 1 \right).$$
+The marginal density for $h^\ast$ is
+\begin{align*}
+  f(h) &= 
+  \int_0^{-\frac{\log h}{K}} \frac{\lambda^\kappa}{\Gamma(\kappa)}
+    \lambda^\kappa s^{\kappa-1} e^{-(\lambda - K)s} ds \\
+    &= \left(\frac{\lambda}{\lambda - K}\right)^\kappa
+  \int_0^{-\frac{\log h}{K}} \frac{(\lambda - K)^\kappa}{\Gamma(\kappa)}
+    \lambda^\kappa s^{\kappa-1} e^{-(\lambda - K)s} ds 
+    = \left(\frac{\lambda}{\lambda - K}\right)^\kappa
+  \int_0^{-\frac{\log h}{K}} \mathrm{G}(s;\kappa,\lambda - K)ds \\
+    &= \left(\frac{\lambda}{\lambda - K}\right)^\kappa
+       \frac{\gamma\left(\kappa, -(\lambda - K) \frac{\log h}{K}\right)}{\Gamma(\kappa)}
+\end{align*}
+where $\gamma$ is the lower incomplete gamma function.
+This model is also illustrated in @fig:dfejoint (C) and @fig:dfemarg.
+
+
+## Two-locus haplodiplontic mainland-island model \label{sec:twolocus}
+
+We here consider the deterministic dynamics of a two-locus haplodiplontic
+model with mainland-island migration in continuous-time.
+We assume a locus $A$ with alleles $A_0$ and $A_1$ and a linked locus $B$ with
+alleles $B_0$ and $B_1$, with recombination between the two loci occurring at
+rate $r$.
+We assume arbitrary dominance and no epistasis, with relative Malthusian
+fitnesses of all possible two-locus genotypes in the two phases given by the
+following tables
+\begin{equation}
+\begin{matrix}
+\text{Haploid} & & \\
+& B_0 & B_1 \\
+A_0 & 0     & \beta_1  \\
+A_1 & \alpha_1 & \alpha_1 + \beta_1 
+\end{matrix} \qquad \qquad 
+\begin{matrix}
+\text{Diploid} & & & \\
+& B_0B_0 & B_0B_1 & B_1B_1 \\
+A_0A_0 & 0     & \beta_{01} & \beta_{11} \\
+A_0A_1 & \alpha_{01} & \alpha_{01} + \beta_{01} & \alpha_{01} + \beta_{11} \\
+A_0A_1 & \alpha_{11} & \alpha_{11} + \beta_{01} & \alpha_{11} + \beta_{11}
+\end{matrix}
+\end{equation}
+Similar to our notation for the single-locus case, we let $\alpha_a = \alpha_1
++ \alpha_{01}$ and $\alpha_b = \alpha_{11} - 2\alpha_{01}$ (and similarly for
+$\beta_a$ and $\beta_b$).
+Let $x_{ij}$ and $y_{ij}$ denote the frequency of the $A_iB_j$ haplotype on the
+island and mainland respectively. The two-locus dynamics in continuous-time are
+given by
+\begin{equation}
+\dot{x}_{ij} = m(y_{ij} - x_{ij}) + (\omega_{ij} - \bar{\omega})x_{ij} - \eta_{ij} rD 
+\label{eq:ode-haplotype}
+\end{equation}
+where $D = x_{00}x_{11} - x_{01}x_{10}$ is the usual measure of linkage
+disequilibrium, $\omega_{ij}$ the marginal fitness of the $A_iB_j$ haplotype,
+$\bar{\omega}$ the mean Malthusian fitness and $\eta_{ij} = 1$ when $i=j$ and
+$-1$ otherwise.
+Defining
+\begin{align*}
+  Q_A &= \alpha_a + \alpha_bq_A &
+  Q_B &= \beta_a + \beta_bq_B \\
+  P_A &= \alpha_a + \alpha_bp_A & 
+  P_B &= \beta_a + \beta_bp_B,
+\end{align*}
+one can find that $\bar{\omega} = q_AQ_A + q_BQ_B$ and write the marginal
+fitnesses as
+\begin{align}
+  \omega_{00} - \bar{\omega} &= -q_AQ_A - q_BQ_B \nonumber \\
+  \omega_{01} - \bar{\omega} &= \beta_a -q_AQ_A - q_BP_B \nonumber \\
+  \omega_{10} - \bar{\omega} &= \alpha_a -q_AP_A - q_BQ_B \nonumber \\
+  \omega_{11} - \bar{\omega} &= \alpha_a + \beta_a -q_AP_A - q_BP_B.
+  \label{eq:twolocus-marg}
+\end{align}
+Let $p_A = x_{00} + x_{01}$ be the allele frequency of $A_0$ and 
+$p_B = x_{00} + x_{10}$ that of $B_0$, and let $q_A = 1-p_A$ and $q_B=1-p_B$.
+We shall assume that the mainland is fixed for haplotype $A_1B_1$ (i.e.
+$y_{11}=1$).
+Using @eq:twolocus-marg with @eq:ode-haplotype, one can derive the dynamics for
+$p_A, p_B$ and $D$:
+\begin{align}
+  \dot{p}_A &= -mp_A - p_Aq_AQ_A - Q_BD \nonumber \\
+  \dot{p}_B &= -mp_B - p_Bq_BQ_B - Q_AD \nonumber \\
+  \dot{D} &= m(p_Ap_B - D) + (Q_A(p_A-q_A) + Q_B(p_B - q_B))D - rD.
+  \label{eq:twolocus-ode}
+\end{align}
+
+We can use @eq:twolocus-ode to derive the effective migration rate at a neutral
+locus linked to a barrier locus maintained at migration-selection balance.
+Let $A$ be the selected locus, and $B$ the linked neutral locus.
+The dynamics of the system are given by @eq:twolocus-ode, where $Q_B = 0$.
+Assuming $r$ is sufficiently large (linkage is sufficiently weak) so that $D$
+equilibrates much faster than the allele frequencies, we can solve the system
+for $D$ at equilibrium to find
+  \begin{equation}
+  \tilde{D} = \frac{mp_Ap_B}{m+r-Q_A(p_A - q_A)}
+  \end{equation}
+We can plug this into the ODE for the neutral locus to find
+  \begin{equation}
+  \dot{p}_B = -m\left(1 + \frac{p_AQ_A}{m+r-Q_A(p_A-q_A)}\right)p_B
+  \label{eq:qle}
+  \end{equation}
+Suggesting that the effective migration rate under the stated assumptions
+should be
+  \begin{equation}
+  m_e = m\left(1 + \frac{p_AQ_A}{m+r-Q_A(p_A-q_A)}\right) 
+    \approx m\left(1 + \frac{p_AQ_A}{r}\right),
+  \end{equation}
+where the approximation holds well for weak linkage, which we assumed when we
+derived @eq:qle.
 
 
 
