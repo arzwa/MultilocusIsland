@@ -101,6 +101,19 @@ function Epqfun(θ; kwargs...)
     return N/Z
 end
 
+# for diploids
+# XXX should make numerically stable (integration by parts) and for haplodiplonts
+# (p^2 + 2pq*exp(s01) + q^2*exp(s11))p^(A-1)q^(B-1)e...
+function Ewfun(θ; kwargs...)
+	@unpack sa, sb, N, m, u, pm = θ
+    A = Afun(N,u,m,pm)
+    B = Bfun(N,u,m,pm) 
+    w(p, q=1-p) = p^2 + 2p*q*exp(sa) + q^2*exp(sb+2sa)
+    N, _ = quadgk(p -> w(p) * p^(A-1) * (1-p)^(B-1) * Cfun(N,p,sa,sb), 0., 1.)
+    Z = Zfun(θ; kwargs...)
+    return N/Z
+end
+
 # Expected value
 Epfun(θ; kwargs...) = Yfun(θ; kwargs...) / Zfun(θ; kwargs...)
 

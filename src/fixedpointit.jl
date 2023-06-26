@@ -62,6 +62,34 @@ end
 expectedsfs(M, Q::Array{T,3}; kwargs...) where T =
     expectedsfs(M, Q[end,:,1], Q[end,:,2]; kwargs...)
 
+"""
+Calculate the load at equilibrium assuming LE, i.e.
+    `∏ᵢℓᵢ, where ℓᵢ = ∫wᵢ(p)ϕ(p)`
+Currently I'm doing this rather crudely.
+"""
+function eqload(M, p, pq, step=0.01)
+    w = 1.
+    c = getclasses(M)
+    ys = expectedsfs(M, p, pq, step=step)
+    for (l, k, y) in zip(c.loci, c.γ, ys) 
+        ps, ϕs = y
+        Z = sum(ϕs)
+        wl = mapreduce(i->MultilocusIsland.meanfitness(l, ps[i]) * ϕs[i] / Z, +, 1:length(ps))
+        w *= wl^k
+    end
+    return 1-w
+end
+
+function eqload2(M, p, pq)
+    w = 0.
+    c = getclasses(M)
+    θ = classparams(c, p, pq)
+    for i=1:length(θ)
+        w += c.γ[i] * log(Ewfun(θ[i]))
+    end
+    return 1-exp(w)
+end
+
 function fixedpointit(
         M::MainlandIslandModel, 
         p::AbstractVector; 
@@ -148,6 +176,18 @@ function fixedpointit_linkage(
     _pqs = permutedims(hcat(pqs...))
     return cat(_ps, _pqs, dims=3), θ
 end
+
+function expectedsfs_linkage(M, p, pq; step=0.05, f=identity, kwargs...)
+    θ = locusparams(M, p, pq)
+    x = (step/2):step:(1-step/2)
+    map(1:length(θ)) do j
+        Z = Zfun(θ[j]; kwargs...)  # normalizing constant
+        y = map(x->Zxfun(θ[j], x, x+step; kwargs...)/(Z*step), 0:step:1-step)
+        x, f.(y)
+    end
+end
+
+gffall(M, p, pq) = locusparams(M, p, pq)
 
 
 # A wild attempt for the finite-island model

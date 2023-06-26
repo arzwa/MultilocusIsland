@@ -69,7 +69,7 @@ end
 
 sample(rng::AbstractRNG, M::FixedMainland, n) = [copy(M.genotype) for i=1:n]
 sample(rng::AbstractRNG, M::PolymorphicMainland, n) = 
-    map(_->[rand(rng) < p ? 0 : 1 for p in M.p], 1:n)
+    map(_->[rand(rng) < p ? 1 : 0 for p in M.p], 1:n)
 
 """
     MainlandIslandModel 

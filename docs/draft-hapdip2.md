@@ -817,7 +817,6 @@ $\tau$ through $N_es_e = N_e(2-\tau)s$ and $h_e = s_e^{-1}(1 - \tau(1-h))$,
 showing that, at least for weak selection, life cycle details can be
 accounted for by means of a set of suitable effective parameters
 (@fig:hapdipeff).
-
 The results displayed in @fig:domtau suggest furthermore that, for a given
 total strength of selection $Ls$, predominantly haploid populations should be able
 to maintain more adaptive variation, and exhibit stronger reproductive
@@ -997,6 +996,17 @@ the error of the single locus prediction is largest for locally beneficial
 recessives, where it can be as large as 90% for (@fig:diffdetail).
 The error of the single locus model for dominant variants is considerably less.
 
+![
+The distribution of fitness effects (DFE) at migration-selection balance for
+different values of $L\bar{s}$.
+The top row shows the marginal distribution of the selection coefficients for
+different migration rates.
+The black line shows the DFE of the sampled genetic architecture (or,
+equivalently, the DFE for $m=0$).
+The bottom row shows the marginal distribution for the dominance coefficient
+for the same cases.
+](/home/arthur_z/vimwiki/build/img/2023-06-25/marg-dfe1.svg)
+
 This does however not imply that, on the whole, recessives necessarily
 contribute more to local adaptation at migration-selection balance than
 dominant alleles do. Although strongly selected recessives will show very
@@ -1005,11 +1015,11 @@ prone to swamping than partially dominant ones.
 One way to quantify this is by considering, for some DFE model, the conditional
 probability density for the selection and dominance coefficient, given that a
 divergent allele is observed on the island, i.e.
-\begin{align*}
+\begin{align}
   f(s_i,h_i|X_i=1) 
   &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
   \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB
-\end{align*}
+\end{align}
 where $X_i$ is an indicator random variable (equalling 1 when a locally
 beneficial allele is observed at locus $i$ and zero otherwise), $B$ is a
 shorthand for the selection and dominance coefficients at the $L-1$ other loci
@@ -1020,7 +1030,11 @@ Carlo approach by sampling random $L$-locus genetic architectures from a DFE
 model and calculating for each $(s_i,h_i)$ pair in the barrier the expected
 beneficial allele frequency $\Ex[p_i|s_i,h_i,b]$ as a weight.
 The weighted sample will be approximately distributed according to $f$.
-Using this stratgey for the exponential-
+Using this strategy for the Exponential-Uniform DFE model, we observe that
+recessives contribute *less* to differentiation than dominants when migration
+is sufficiently strong.
+
+
 
 
 

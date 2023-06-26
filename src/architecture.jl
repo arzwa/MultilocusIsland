@@ -12,6 +12,8 @@ struct HapDipLocus{T}
     s11 :: T  # diploid homozygous effect
 end
 
+sasb(l::HapDipLocus) = (sa=l.s1 + l.s01, sb=l.s11 - 2l.s01)
+
 Base.show(io::IO, l::HapDipLocus) = write(io, "HapDipLocus$(string(l))")
 Base.string(l::HapDipLocus) = @sprintf "(%.3f, %.3f, %.3f)" l.s1 l.s01 l.s11
 
@@ -24,6 +26,11 @@ haploidfitness(l::AbstractVector, g::AbstractVector) =
 diploidfitness(l::HapDipLocus, g) = g == 0 ? 0. : g == 1 ? l.s01 : l.s11
 diploidfitness(l::AbstractVector, g::AbstractVector) = 
     mapreduce(x->diploidfitness(x...), +, zip(l, g))
+
+# haplodiplontic mean fitness ∑ᵢpᵢeˢⁱ(∑ⱼpⱼeˢⁱʲ), reduces properly to diploid
+# and haploid cases when the relevant selection coeffs are 0.
+meanfitness(l::HapDipLocus, p, q=1-p) = 
+    p*(p + exp(l.s01)*q) + exp(l.s1)*q*(exp(l.s01)*p + exp(l.s11)*q)
 
 # aliases
 HapLocus(s) = HapDipLocus(s, 0., 0.)

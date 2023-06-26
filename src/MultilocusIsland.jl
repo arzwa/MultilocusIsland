@@ -49,4 +49,7 @@ export findroots_ms, solve
 include("utils.jl")
 export _Ne2N, sfs, harmonicmean
 
+include("dfe.jl")
+export IndependentDFE, CKExponential, CKGamma, Logisticsbyh, randlocus
+
 end # module MultilocusIsland
