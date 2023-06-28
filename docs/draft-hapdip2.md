@@ -830,7 +830,6 @@ that in diploids in the absence of dominance.
 The relevance of these observations for the evolution and maintenance of
 haplodiplontic life cycles is however not very clear, as a life cycle modifier
 need not keep the overall strength of selection constant [@scott2017].
-
 \hl{Perhaps not without interest to consider to what extent these results are
 affected when migration is in the diploid phase or at the end of the haploid
 phase? Does spore dispersal give an advantage when it comes to maintaining
@@ -912,21 +911,14 @@ straightforwardly apply in the polygenic setting, where LD can have a
 considerable protective effect and render recessives more robust to
 swamping, even when selected loci are unlinked.
 
-We next consider fully heterogeneous barriers, where all $L$ loci have
-different fitness effects. We are particularly interested in (1) the extent of
-selective interference among loci due to LD, which can be quantified by
-comparing our multilocus prediction against single locus theory, (2) the
-relative contribution of different types of loci to the genome-wide barrier
-effect and (3) how different assumptions on the distribution of fitness effects
-(DFE) yield different patterns of genome-wide adaptive differentiation.
-
 ![
 Variation among selective effects weakens polygenic barriers.  (A) The boxplots
-show the expected per-locus differentiation across the $L$-locus barrier
-($L=100$) across 50 replicate simulations of an additive polygenic barrier
-where selection coefficients are distributed according to a $\Gam(\kappa,
-\kappa/\bar{s})$ distribution, with $\Ex[s] = \bar{s} = 0.01$ and six different
-values of $\kappa$.
+show the expected per-locus differentiation (equivalent to $\Ex[p]$, the
+expected frequency of a locally beneficial allele on the island at a random
+barrier locus) across the $L$-locus barrier ($L=100$) across 50 replicate
+simulations of an additive polygenic barrier where selection coefficients are
+distributed according to a $\Gam(\kappa, \kappa/\bar{s})$ distribution, with
+$\Ex[s] = \bar{s} = 0.01$ and six different values of $\kappa$.
 The solid horizontal line shows the predicted equilibrium differentiation per
 locus for a homogeneous barrier of strength $L\bar{s}$, whereas the dashed line
 shows the single locus prediction for a diploid locus with $s = \bar{s}$.
@@ -938,19 +930,34 @@ simulations.
 simulation replicate for each of the six assumed distributions, sorted by
 allele frequency, assuming $m/\bar{s} = 0.1$ (horizontal lines as in (A);
 colors as in (A) and (B)). Other parameters are $N_e\bar{s} = 10$,
-$u=\bar{s}/200$.
-](/home/arthur_z/vimwiki/build/img/2023-06-22/gammas2.svg){#fig:gammas}
+$u/\bar{s} = 0.005$.
+](/home/arthur_z/vimwiki/build/img/2023-06-28/gammas.svg){#fig:gammas}
 
-Let us first consider the case with variable selection coefficients, assuming
+We next consider fully heterogeneous barriers, where all $L$ loci have
+different fitness effects. We are particularly interested in (1) the extent of
+selective interference among loci due to LD, which can be quantified by
+comparing our multilocus prediction against single locus theory, (2) the
+relative contribution of different types of loci to the genome-wide barrier
+effect and (3) how different assumptions on the distribution of fitness effects
+(DFE) yield different patterns of genome-wide adaptive differentiation.
+We first consider the case with variable selection coefficients, assuming
 no dominance.
 In @fig:gammas, we show the average differentiation per selected locus in
 randomly simulated polygenic barriers ($L=100$) with Gamma distributed
 selection coefficients.
-Increasing the variance in selective effects, while keeping $\Ex[s] = \bar{s}$
-constant, yields on average weaker barriers, systematically yielding lower
-equilibrium frequencies than a homogeneous barrier of strength $L\bar{s}$, and
-often yielding, on average, lower per-locus differentiation than a single locus
-selected against with intensity $\bar{s}$.
+When migration is weak relative to selection (roughly $m/\bar{s} < 1/4$),
+increasing the variance in selective effects, while keeping $\Ex[s] = \bar{s}$
+constant, yields on average weaker barriers, with lower equilibrium
+differentiation than a homogeneous barrier of strength $L\bar{s}$.
+Often the average per-locus differentiation is even lower than that of a single
+locus selected against with intensity $\bar{s}$ (@fig:gammas, $m/\bar{s} =
+0.05, 0.1, 0.2$).
+However, as the migration rate becomes larger, a shift occurs, and
+heterogeneous barriers tend to yield higher equilibrium differentiation than a
+homogeneous one with the same average effect.
+This is largely driven by a subset of loci with relatively large $s$ that
+resist swamping. 
+The effect of increasing the variance appears less substantial in this regime.
 Given that the distribution of selection coefficients is generally believed to
 be at least somewhat leptokurtic, these results suggest that heterogeneity in
 selection coefficients has important consequences for observable
@@ -964,20 +971,28 @@ differentiation depending on whether the migration rate exceeds the swamping
 threshold for recessives (which are associated with higher equilibrium
 frequencies) or not (@fig:betas).
 
-![Deviation of predicted allele frequencies for $L=100$ loci with varying
-selective effects and dominance coefficients when accounting for LD
-(multilocus) from predictions based on single locus diffusion theory.
-The columns show results for different total strengths of selection
-($L\bar{s}$), whereas the rows show results for increasing rates of migration
-relative to selection ($m/\bar{s}$). We assume the $s_i$ to be exponentially
-distributed with mean $\bar{s}$ and dominance coefficients are sampled
-uniformly from the $[0,1]$ interval. Each dot is associated with a single locus
-in the barrier, and is colored according to its dominance coefficient.
-Each plot combines results for 10 independently sampled genetic architectures
-(i.e. there are $L\times 10 = 1000$ data points in each plot). Other parameters
-include $N_e\bar{s} = 8$ and $u/\bar{s} = 0.005$.
+![
+(A) Deviation of predicted allele frequencies for loci in heterogeneous
+polygenic barriers when accounting for LD (multilocus) from predictions based
+on single locus diffusion theory. 
+The rows show results for different total strengths of selection (different
+number of loci $L\bar{s}$ with $\bar{s} = 0.01$), whereas the columns show
+results for increasing rates of migration relative to selection ($m/\bar{s}$).
+We assume the $s_i$ to be exponentially distributed with mean $\bar{s}$ and
+dominance coefficients are sampled uniformly from the $[0,1]$ interval.
+Each dot is associated with a single locus in an $L$-locus barrier, and is
+colored according to its dominance coefficient.
+Each plot shows results for 1000 such loci, subssampled from a total of
+$150000/L$ simulations of $L$-locus barriers.
+(B) Monte Carlo approximation to the marginal distribution of the selection and
+dominance coefficient conditional on observing a divergent allele on the island
+(i.e. $f(s_i|X_i=1)$ and $f(h_i|X_i=1)$, see @eq:msbdfe). The distribution graphed
+in gray shows $f_\text{DFE}$, i.e. the marginal distribution of the selection
+and dominance coefficient for a random locus in the $L$-locus barrier (not
+considering migration).
+We assumed $N_e\bar{s} = 20$ and $u/\bar{s} = 0.005$ for all results.
 \label{fig:diffdetail}
-](/home/arthur_z/vimwiki/build/img/2023-06-09/diffdetail.svg){width=65%}
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe1.svg)
 
 If we compare the expected differentiation at any particular locus in a
 heterogeneous polygenic barrier to the single locus prediction for that locus,
@@ -993,49 +1008,115 @@ extent of drift and the total strength of selection, predictions can be off by
 Considering in more detail how different loci across the barrier behave at
 migration-selection balance in the polygenic regime, we find that, as expected,
 the error of the single locus prediction is largest for locally beneficial
-recessives, where it can be as large as 90% for (@fig:diffdetail).
+recessives, where it can be as large as 90% for (@fig:diffdetail A).
 The error of the single locus model for dominant variants is considerably less.
-
-![
-The distribution of fitness effects (DFE) at migration-selection balance for
-different values of $L\bar{s}$.
-The top row shows the marginal distribution of the selection coefficients for
-different migration rates.
-The black line shows the DFE of the sampled genetic architecture (or,
-equivalently, the DFE for $m=0$).
-The bottom row shows the marginal distribution for the dominance coefficient
-for the same cases.
-](/home/arthur_z/vimwiki/build/img/2023-06-25/marg-dfe1.svg)
+As expected, the excess differentiation relative to the single locus
+predictions increases markedly with $L\bar{s}$.
+@Fig:diffdetail further illustrates clearly how many, predominantly partially
+recessive, alleles are protected from swamping in a polygenic setting when
+$L\bar{s} \gtrsim 1$ (note however that this will also depend on the variance
+of the $s_i$).
 
 This does however not imply that, on the whole, recessives necessarily
 contribute more to local adaptation at migration-selection balance than
-dominant alleles do. Although strongly selected recessives will show very
-strong divergence, more weakly selected recessive alleles may be much more
-prone to swamping than partially dominant ones.
-One way to quantify this is by considering, for some DFE model, the conditional
+dominant alleles do.
+Although strongly selected recessives will be associated with strong
+differentiation, more weakly selected recessive alleles may be much more prone
+to swamping than partially dominant ones.
+One way to quantify how these two phenomena interact to yield the *realized*
+genetic architecture of local adaptation is by considering the conditional
 probability density for the selection and dominance coefficient, given that a
 divergent allele is observed on the island, i.e.
 \begin{align}
   f(s_i,h_i|X_i=1) 
   &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
   \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB
+  \label{eq:msbdfe}
 \end{align}
-where $X_i$ is an indicator random variable (equalling 1 when a locally
-beneficial allele is observed at locus $i$ and zero otherwise), $B$ is a
-shorthand for the selection and dominance coefficients at the $L-1$ other loci
-('$B$' for background), and we integrate over the set of all possible such
-backgrounds $\mathcal{B}$.
+where $f_\text{DFE}$ denotes the joint density of the selection and dominance
+coefficient in the $L$-locus barrier (which is equivalent to $f(s_i,h_i|X_i=1)$
+in the absence of migration), $X_i$ is an indicator random variable (equalling
+1 when a locally beneficial allele is observed at locus $i$ and zero
+otherwise), $B$ is a shorthand for the selection and dominance coefficients at
+the $L-1$ other loci ('$B$' for background), and we integrate over the set of
+all possible such backgrounds $\mathcal{B}$.
 We can can characterize this conditional probability density using a Monte
 Carlo approach by sampling random $L$-locus genetic architectures from a DFE
 model and calculating for each $(s_i,h_i)$ pair in the barrier the expected
 beneficial allele frequency $\Ex[p_i|s_i,h_i,b]$ as a weight.
-The weighted sample will be approximately distributed according to $f$.
-Using this strategy for the Exponential-Uniform DFE model, we observe that
-recessives contribute *less* to differentiation than dominants when migration
-is sufficiently strong.
+The weighted sample will be distributed according to $f$.
+@Fig:diffdetail (B) shows approximations to the marginal distributions
+$f(s_i|X_i=1)$ and $f(h_i|X_i=1)$ for Exponential-Uniform DFE model obtained
+using this Monte Carlo approach.
+As expected, we find that as migration rates go up, the distribution of
+selection coefficients in the barrier at migration-selection balance shifts
+towards higher values of $s$, and that this effect is counteracted by
+increasing $L\bar{s}$, which increases the extent by which small-effect alleles
+are protected from swamping by LD.
+Notably, we observe that recessives contribute *less* to differentiation than
+dominants do when migration is sufficiently strong. 
+This is most strongly observed when $L\bar{s}$ is not large.
+When $L\bar{s} = 1.5$ for instance, the depression in the conditional density
+at $h=1$ becomes very slight even for relatively large migration rates.
+We observe a similar shift in the distribution of dominance coefficients when
+$h$ is Beta distributed with mean $2/3$ instead of uniformly on the unit
+interval (@fig:dfe1).
+It is noteworthy that, despite $s$ and $h$ being independent at each locus in
+the barrier, migration-selection balance induces a correlation between $s$
+and $h$ in the distribution conditional on observed divergence, with variants
+of relatively large effect observed at equilibrium being more likely to act
+recessively than variants of small effect (@fig:dfe1j).
+The correlation is negligible for small migration rates, but as the strength of
+migration increases so that swamping effects become relevant, the correlation
+coefficient can become as large as $0.25$, depending on $L\bar{s}$.
+
+![
+The realized genetic architecture of local adaptation for different DFE models
+for increasing strength of migration.
+Contour plots for the joint density of $h$ and $s$ conditional on observing a
+divergent allele on the island (see @eq:msbdfe) are shown for the three DFE
+models (rows) for increasing rates of migration (columns).
+Values of $\Delta$ in the lower right corner denote the expected
+differentiation per locus.
+We assume $L\bar{s}=0.8, \bar{s}=0.01, N_es=20, u/s=0.005$ and exponentially
+distributed selection coefficients, and parameterize the DFE models so that
+$\Ex[h] = 2/3$, assuming $\alpha=2, \beta=1$ for the independent model, $a=7.2,
+b=1.2, \sigma=1$ for the logistic model and $K=50$ for the CK94 model.
+The densities are approximated using a Monte Carlo approach, simulating 500
+replicate $L$ locus genetic architectures from the assumed DFE model, fitting a
+kernel density estimate to the sample so obtained.
+](/home/arthur_z/vimwiki/build/img/2023-06-28/dfecomp.svg){#fig:dfecomp}
 
 
-
+The simple DFE model assumed above where selection and dominance coefficients
+are independent is almost certainly inadequate.
+Theoretical and empirical work has indicated that, on the one hand, a
+correlation between selective effect and degree of dominance can be expected in
+the standing genetic variation that is the basis for a polygenic selection
+response, with large-effect alleles more likely to act recessively
+[@caballero1994; @zhang2004; @agrawal2011].
+On the other hand, it is well appreciated that during the process of
+adaptation, different loci enjoy different probabilities of rising to high
+frequencies. Dominant alleles are easier picked up by selection than
+(partially) recessive ones with the same homozygous effect (Haldane's
+sieve; @haldane1927, @turner1981). 
+These two aspects interact when adaptation is from standing variation, as
+the (on average) higher initial frequency of partially recessive alleles
+increases the fixation probability, whereas its recessivity decreases it
+[@orr2001].
+To examine how the realized genetic architecture of local adaptation depends on
+such assumptions, we consider two alternative, admittedly *ad hoc*, DFE models,
+outlined in @sec:dfe.
+Both models assume Gamma distributed selection coefficients and incorporate a
+positive correlation between $s$ and $h$, so that alleles of large effect tend
+to be more recessive (recall once more that $h$ in our case is the dominance
+coefficient of the invading allele, so $h=1$ corresponds to recessive local
+adaptation).
+We keep the average dominance coefficient fixed to $2/3$ for each model.
+In contrast with the independent model, we find that for the models that
+incorporate a correlation between $s$ and $h$, recessives are typically more
+likely to contribute to the realized differentiation at equilibrium
+(@fig:dfecomp, @fig:dfe1, @fig:dfe2, @fig:dfe3).
 
 
 ## Discussion
@@ -1200,8 +1281,8 @@ generation). The frequency distributions are shown for $m/\bar{s} = 0.2$.
 As in @fig:gammas, but now keeping the selection coefficient fixed at $\bar{s}
 = 0.01$ and using randomly sampled dominance coefficients, from a symmetric
 Beta distribution with parameter $\alpha$. Again, $L=100, N_es = 10,
-u/s=0.005$.
-](/home/arthur_z/vimwiki/build/img/2023-06-22/betas.svg){#fig:betas}
+u/s=0.005$. In (C) we assumed $m/s = 0.3$.
+](/home/arthur_z/vimwiki/build/img/2023-06-28/betas.svg){#fig:betas}
 
 ![Average difference in predicted allele frequency for the single locus vs.
 multilocus model. We assume $L=100$, $s_i \sim \Exp(\bar{s})$ and $h_i \sim
@@ -1213,6 +1294,41 @@ The results are averaged across 10 random $L$-locus barriers. We show results
 for different strengths of genetic drift ($N_e\bar{s}$).
 Note that values of $L\bar{s}$ range from 0.5 to 2 ($y$-axis). 
 ](/home/arthur_z/vimwiki/build/img/2023-06-21/driftdiff.svg){#fig:randdiff}
+
+![
+As in @fig:diffdetail, but with $h \sim \Beta(2,1)$ (so that $\Ex[h] = 2/3$).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe1b.svg){#fig:dfe1}
+
+![
+As in @fig:diffdetail, but for the logistic regression model (with $\bar{s} = 1,
+\kappa=1, a=7.2, b=1.2, \Ex[h] \approx 2/3, \sigma=1$; see @sec:dfe).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe2b.svg){#fig:dfe2}
+
+![
+As in @fig:diffdetail, but for the CK94 model (with $\bar{s}=0.01, \kappa=1$
+and $\Ex[h] = 2/3$, yielding $K=50$; see @sec:dfe).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe3b.svg){#fig:dfe3}
+
+![
+Monte Carlo approximation to the joint probability distribution of $s$ and $h$
+conditional on observing a divergent allele on the island (@eq:msbdfe) for the
+DFE model with independent selection and dominance coefficients (see
+@fig:diffdetail and @sec:dfe). Deep blue designates regions of low probability
+density, bright yellow regions of high probability density. The estimated
+correlation $\rho$ between $s$ and $h$ is shown in the upper right corner.
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe1joint.svg){#fig:dfe1j}
+
+![
+As in @fig:dfe1j, but with $h \sim \Beta(2,1)$ (see @fig:dfe1 and @sec:dfe).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe1bjoint.svg){#fig:dfe1bj}
+
+![
+As in @fig:dfe1j, but for the logistic model (see @fig:dfe2 and @sec:dfe).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe2joint.svg){#fig:dfe2j}
+
+![
+As in @fig:dfe1j, but for the CK94 model (see @fig:dfe3 and @sec:dfe).
+](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe3joint.svg){#fig:dfe3j}
 
 \clearpage
 
