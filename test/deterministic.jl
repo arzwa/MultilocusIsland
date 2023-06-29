@@ -192,3 +192,31 @@ map([0, 0.5, 1]) do h
         P
     end |> x->plot(x..., layout=(1,4), ylim=(-1,Inf))
 end |> x->plot(x..., layout=(3,1), size=(820,600), framestyle=:origin)
+
+
+# check sh correspondence
+P = plot()
+PP = map(enumerate([0.5, 1.0])) do (j,h)
+    xmx = 1.5
+    lss = [:solid, :dot]
+    map(enumerate([0.01,0.25,0.5,0.75,1.,1.25,1.5])) do (i,Lsh)
+        s  = 0.01
+        sa = -s*h
+        sb = -s -2sa
+        x, y, x_, y_, = findroots_ms(sa, sb, Lsh/(s*h))
+        color = i == 1 ? :lightgray : i-1
+        plot!(x,y,   color=color, lw=3, alpha=0.7, label=j == 1 ? "\$Lsh=$(@sprintf "%.2f" Lsh)\$" : "", ls=lss[j])
+#        plot!(x_,y_, color=color, alpha=0.7, label="", ls=lss[j])
+        plot!([last(x), last(x), xmx], [last(y), 0, 0], color=color, lw=3, alpha=0.7, label="", ls=lss[j])
+        ms, pc = critical_point(h, Lsh/h)
+        cc = :black
+        j == 1 ? 
+            scatter!([ms], [pc], color=color, label="", markerstrokewidth=3, markerstrokecolor=color, ms=4) :
+            scatter!([ms], [pc], color=:white, label="", markerstrokewidth=3, markerstrokecolor=color, lw=2, ms=4)
+    end
+    #lab = ["A", "B", "C"][j]
+    #P1 = plot(P, title="($lab) \$s=0.01, h=$(@sprintf "%.2f" h)\$", 
+    #         xlabel="\$m/s\$", xlim=(0,xmx), bottom_margin=5Plots.mm,
+    #          ylabel="\$\\tilde{p}\$", legend=h == 0.5 ? :bottomright : false)
+end
+plot(P, layout=(1,3), size=(450,250), xlabel="\$m/s\$", ylabel="\$\\tilde{p}\$")

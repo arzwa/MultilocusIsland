@@ -3,6 +3,8 @@ using Plots, PlotThemes, Distributions, Parameters; theme(:hokusai)
 using LogExpFunctions
 cs = ColorSchemes.viridis
 
+
+
 map([2/3, 1, 3/2]) do κ
     s̄ = 0.01
     λ = κ/s̄
@@ -117,77 +119,42 @@ function msedfe1(dfe, L, N, k, u, m; n=100)
     sss, hss, wss, dss
 end 
 
-
-# Exponential-uniform model
-# -------------------------
-Ns = 20
-s  = 0.01
-Ne = Ns/s
-k  = 5
-N  = _Ne2N(Ne, k)
-u  = s * 0.005
-n  = 10
-Lss = [0.5, 1., 1.5]
-mms = [0.1, 0.3, 0.5]
-ss  = 0.005:0.005:0.08
-hs  = 0:0.05:1
-
-out = map(Lss) do Ls
-    L = ceil(Int, Ls / s)
-    map(mms) do ms
-        E1, Y1 = msedfe(dfe, ss, hs, L, N, k, u, ms*s, n=n)
-        @info Ls, ms
-        E1, Y1
-    end
+function pearcor(ss, hs, ws)
+    ws ./= sum(ws)
+    ms = sum(ss .* ws)
+    mh = sum(hs .* ws) 
+    cv = sum((ss .- ms) .* (hs .- mh) .* ws)
+    vs = sum(((ss .- ms) .^ 2) .* ws)
+    vh = sum(((hs .- mh) .^ 2) .* ws) 
+    ρ = cv / √(vs*vh) 
 end
 
-ED = mapreduce(x->first.(x), hcat, out)
-pp = mapreduce(x->last.(x), hcat, out)
-
-pp = map(zip(Lss,out)) do (Ls,x)
-    map(zip(mms, last.(x))) do (m,y)
-        ttl = "\$L\\bar{s}=$Ls, m/\\bar{s}=$m\$"
-        heatmap(ss .- minimum(ss), hs, y, colorbar=false, title=ttl, titlefont=9,
-                xlabel="\$s\$", ylabel="\$h\$")
-    end 
-end |> x->vcat(x...)
-plot(pp..., size=(650,600))
-
-
-Ns = 20
-s  = 0.01
-Ne = Ns/s
-k  = 5
-N  = _Ne2N(Ne, k)
-u  = s * 0.005
-κ = 1
-λ = 1/s
-Lss = [0.5, 1., 1.5]
-mms = 0.05:0.15:0.5
-dfe1 = IndependentDFE(Gamma(κ, 1/λ), Beta(1, 1))
-
-out11 = tmap(Lss) do Ls
-    L = ceil(Int, Ls / s)
-    n = 150000/L
-    map(mms) do ms
-        @info Ls, ms, L, n
-        ss, hs, ws, df = msedfe1(dfe1, L, N, k, u, ms*s, n=n)
-    end
+function reflectedkde(hs, ws, b1=0, b2=1)
+    mx = maximum(hs)
+    Hs = [b1 .- hs ; hs ; b2 .+ (mx .- hs)]
+    Ws = [ws  ; ws ; ws]
+    kd = kde(Hs, weights=Weights(Ws))
 end
 
-MP = marginalplot(out11, Lss, mms, dfe1, yh=(0,1.3))
-
-function jointplot(out, Lss, mms, xmx=0.1)
+function jointplot(out, Lss, mms; bsize=0.005, xmx=0.1, kwargs...)
     ps = map(zip(out, Lss)) do (X, Ls)
         map(zip(X, mms)) do ((ss, hs, ws, ds), m)
             D = @sprintf "%.2f" mean(ws)
-            ttl = "\$L\\bar{s}=$Ls, m/\\bar{s} = $m, D = $D\$"
+            ttl = "\$L\\bar{s}=$Ls, m/\\bar{s} = $m\$"
             histogram2d(-ss, hs, weights=Weights(ws), colorbar=false,
-                        bins=(0:0.005:xmx,20), title=ttl, titlefont=7)
+                        bins=(0:bsize:xmx,20), title=ttl, titlefont=8)
+            ρ = pearcor(-ss, hs, ws)
+            ρ = abs(ρ) < 0.01 ? 0. : ρ 
+            y1, y2 = ylims()
+            x1, x2 = xlims()
+            annotate!(0.97x2, 0.93y2, 
+                      text("\$\\rho = $(@sprintf "%.2f" ρ)\$", :white, 8, :right)) 
         end 
     end |> x->hcat(x...) 
-    ps = permutedims(ps)
-    plot(ps..., size=(600,580), xlim=(0,xmx*1.01), tickfont=7, xlabel="\$s\$", ylabel="\$h\$")
+    #ps = permutedims(ps)
+    xt = round(xmx/2, digits=3)
+    plot(ps..., xlim=(0,xmx), xticks=0:xt:xmx, tickfont=6, xlabel="\$s\$",
+         ylabel="\$h\$"; kwargs...)
 end
 
 function marginalplot(out, Lss, mms, dfe, xmx=0.1)
@@ -212,28 +179,29 @@ end
 
 function marginalplot(out, Lss, mms, dfe; xmx=0.1, yh=(0,Inf), kwargs...)
     ps = map(zip(out, Lss)) do (X, Ls)
-        P1 = plot(0:0.001:xmx, s->pdf(dfe.sd, s), color=:black, xlim=(0,xmx), label="")
-        P2 = plot(0:0.01:1, h->MultilocusIsland.pdfh(dfe, h), color=:black, xlim=(0,1), ylim=yh)
+        P1 = plot(0:0.001:xmx, s->pdf(dfe.sd, s), color=:black, xlim=(0,xmx),
+                  label="", fill=true, fillalpha=0.2)
+        P2 = plot(0:0.01:1, h->MultilocusIsland.pdfh(dfe, h), color=:black,
+                  xlim=(0,1), ylim=yh, fill=true, fillalpha=0.2)
         map(enumerate(zip(X, mms))) do (i,((ss, hs, ws, ds), m))
-            Hs = [-hs ; hs ; 2 .- hs]
-            Ws = [ws  ; ws ; ws]
-            kd = kde(Hs, weights=Weights(Ws))
+            kd = reflectedkde(hs, ws)
             D = @sprintf "%.2f" mean(ws)
             ttl = "\$L\\bar{s}=$Ls\$"
             lab = @sprintf "%.2f" m
             p1 = density!(P1, -ss, weights=Weights(ws), normalize=true,
                           title=ttl,
-                          label="\$m/\\bar{s} = $lab\$", xlabel="\$s\$", color=i,
-                          legend=:topright; kwargs...)
+                          ylabel="\$f\$",
+                          label="\$m/\\bar{s} = $lab\$", xlabel="\$s_i\$", color=i,
+                          legend=Ls == 0.5 ? :topright : false; kwargs...)
             p2 = plot!(P2, 0:0.01:1, h->pdf(kd, h)*3, legend=false,
-                          xlabel="\$h\$", color=i; kwargs...)
+                          ylabel="\$f\$",
+                          xlabel="\$h_i\$", color=i; kwargs...)
         end 
         plot(P1, P2, layout=(2,1))
     end |> x->hcat(x...) 
     ps = permutedims(ps)
-    plot(ps..., size=(550,280), tickfont=7, layout=(1,3))
+    plot(ps..., size=(550,280), tickfont=7, layout=(3,1), margin=0Plots.mm; kwargs...)
 end
-marginalplot(out11, Lss, mms, dfe1, trim=true)
 
 function scatterplot(out, Lss, mms, xmx=0.1)
     ps = map(zip(out, Lss)) do (X, Ls)
@@ -253,77 +221,194 @@ function scatterplot(out, Lss, mms, xmx=0.1)
 end
 scatterplot(out11, Lss, mms)
 
-#serialize("data/dfes.jls", [(dfe1, out11), (dfe2, out21), (dfe3, out31)])
-
-out = deserialize("data/dfes.jls")
-
-map(enumerate(out)) do (i, (d, o))
-    JP = jointplot(o, Lss, mms)
-    savefig("$pth/joint$i.svg")
-    MP = marginalplot(o, Lss, mms, d)
-    savefig("$pth/marginal$i.svg")
-    SP = scatterplot(o, Lss, mms)
-    savefig("$pth/scatter$i.png")
-end
-
-Ps = map(enumerate(out)) do (i, (d, o))
-end
-
-MP = marginalplot(out[1][2], Lss, mms, out[1][1], yh=(0,1.3))
-MP = marginalplot(out[2][2], Lss, mms, out[2][1], yh=(0,4.5))
-MP = marginalplot(out[3][2], Lss, mms, out[3][1], yh=(0,3.5))
-
 
 # good plot?
-dfe1, out11 = out[1]
-Ps = map(zip(Lss, out11)) do (Ls, x)
-    map(zip(mms, x)) do (m, y)
-        ss, hs, ws, ds = y    
-        idx = rand(1:length(ws), 1000)
-        scatter(ws[idx] .- ds[idx], ds[idx], color=get.(Ref(cs), hs[idx]))
+function scatmarg(dfe, out, Lss, mms; yh=(0,Inf), xmx=0.052)
+    Ps = map(zip(Lss, out)) do (Ls, x)
+        map(zip(mms, x)) do (m, y)
+            ss, hs, ws, ds = y    
+            yl = m == 0.05
+            xl = Ls == 1.5
+            idx = sample(1:length(ws), 1000, replace=false)
+            #sh = hs[idx] .* (-ss[idx])
+            #sh = (sh .- minimum(sh))/(maximum(sh) - minimum(sh))
+            scatter(ws[idx] .- ds[idx], ws[idx], 
+                    color=get.(Ref(cs), hs[idx]),
+                    alpha=0.5, ms=3,
+                    title="\$L\\bar{s} = $Ls, m/\\bar{s} = $m\$", 
+                    legend=false, xlim=(0,1), ylim=(0,1),
+                    ylabel= yl ? "\$\\mathbb{E}[p_i]\$ multilocus" : "",
+                    xlabel= xl ? "\$\\mathbb{E}[p_i]\$ single locus" : "")
+            plot!(x->x, color=:gray)
+        end
+    end
+    Ps = vcat(Ps...)
+    annotate!(Ps[1], -0.35, 1.105, text("\$\\mathrm{(A)}\$", 10))
+    # colorbar
+    plot!(Ps[end], repeat([0.9], 20), range(0.1,0.8,20), 
+          lw=4, color=get.(Ref(cs), range(0,1,20)))
+    annotate!(0.82, 0.45, text("\$h\$", 9, :left))
+    annotate!(0.93, 0.1, text("\$0\$", 9, :left))
+    annotate!(0.93, 0.8, text("\$1\$", 9, :left))
+    Ps = plot(Ps..., size=(600,600))
+    # marginal plot
+    MP = marginalplot(out, Lss, mms, dfe, xmx=0.052, yh=yh, tickfont=6, margin=-1Plots.mm)
+    _, ymx = ylims(MP[1])
+    annotate!(MP[1], -0.018, ymx*1.15, text("\$\\mathrm{(B)}\$", 10))
+    # plot
+    plot(Ps, MP, layout=grid(1,2, widths=[0.85,0.15]), size=(920,540),
+         left_margin=3Plots.mm, guidefont=8, titlefont=9, legendfont=6, 
+         right_margin=0.5Plots.mm)
+end
+
+scatmarg(dfe1, out11, Lss, mms)
+
+scatmarg(dfe2, out21, Lss, mms, yh=(0,6.4))
+
+scatmarg(dfe3, out31, Lss, mms, yh=(0,3.4))
+
+jointplot(out11, Lss, mms, size=(700,500), xmx=0.06, margin=0Plots.mm, bsize=0.0025)
+savefig("$pth/dfe1bjoint.svg")
+
+jointplot(out21, Lss, mms, size=(700,500), xmx=0.06, margin=0Plots.mm, bsize=0.0025)
+savefig("$pth/dfe2bjoint.svg")
+
+jointplot(out31, Lss, mms, size=(700,500), xmx=0.06, margin=0Plots.mm, bsize=0.0025)
+savefig("$pth/dfe3bjoint.svg")
+
+
+
+# make plots
+using Serialization, StatsPlots, KernelDensity
+#serialize("data/dfes-h23.jls", [(dfe1, out11), (dfe2, out21), (dfe3, out31)])
+out = deserialize("data/dfes-h23.jls")
+
+(dfe1, out11), (dfe2, out21), (dfe3, out31) = out
+
+
+# Models: all of them have E[h] = 2/3
+Ns = 20
+s  = 0.01
+Ne = Ns/s
+k  = 5
+N  = _Ne2N(Ne, k)
+u  = s * 0.005
+κ = 1
+λ = 1/s
+Lss = [0.5, 1., 1.5]
+mms = 0.05:0.15:0.5
+dfe1 = IndependentDFE(Gamma(κ, 1/λ), Beta(2,1))
+dfe2 = Logisticsbyh(Gamma(κ, 1/λ), (s/4, 0.5), (0.1135, 0.99), 1.)
+quadgk(h->h*MultilocusIsland.pdfh(dfe2, h), 0, 1)
+dfe3 = CKGamma(κ, λ, 1/3)
+nL   = 75000
+
+function thevar(dfe)
+    mh, _ = quadgk(h->h*MultilocusIsland.pdfh(dfe, h), 0, 1)
+    vh, _ = quadgk(h->(h - mh)^2*MultilocusIsland.pdfh(dfe, h), 0, 1)
+    mh, vh
+end
+
+dfe2 = Logisticsbyh(Gamma(κ, 1/λ), (s/4, 0.5), (0.1135, 0.99), 1.)
+thevar(dfe1)
+thevar(dfe3)
+thevar(dfe2)
+
+
+plot()
+map(zip([dfe1, dfe2, dfe3], ["independent", "logistic", "CK94"])) do (df, lab)
+    plot!(0:0.01:1, h->MultilocusIsland.pdfh(df, h), fill=true,
+          fillalpha=0.2, label=lab, legend=:topleft, xlabel="\$h\$")
+end
+plot!()
+
+
+# compare the DFE models
+# ======================
+ms2 = 0.05:0.15:0.8
+n = 500
+out2 = tmap(ms2) do ms
+    L  = 80
+    @info ms
+    x1 = msedfe1(dfe1, L, N, k, u, ms*s, n=n)
+    x2 = msedfe1(dfe2, L, N, k, u, ms*s, n=n)
+    x3 = msedfe1(dfe3, L, N, k, u, ms*s, n=n)
+    (x1, x2, x3)
+end
+
+
+ps = map(enumerate(out2)) do (j,x)
+    pp = map(enumerate(zip([dfe1, dfe2, dfe3], x))) do (i,(dfe, y))
+        ss, hs, ws, ds = y
+        D = sum(ws) / (n*80)
+        dd = @sprintf "%.2f" D
+        ll = ["Independent", "Logistic", "CK94"][i]
+        tt = "\$m/\\bar{s} = $(@sprintf "%.2f" ms2[j])\$"
+        xs = collect(zip(-ss, hs))
+        ys = sample(xs, Weights(ws), 100000)
+        kd = kde((first.(ys), last.(ys)), bandwidth=(0.005, 0.05))
+        plot(kd, xlims=(0,0.06), ylims=(0,1), levels=7, colorbar=false,
+             title  = i == 1 ? tt : "",
+             xticks = dfe == dfe3 ? (0:0.02:0.06) : false,
+             xlabel = dfe == dfe3 ? "\$s\$" : "", 
+             ylabel = x == out2[1] ? "$ll\n\$h\$" : "")
+        annotate!(0.058, 0.12, text("\$\\Delta = $dd\$", 8, :right))
+#        histogram2d(first.(ys), last.(ys), bins=(0:0.005:0.06, 0:0.05:1), colorbar=false)       
+    end
+    plot(pp..., layout=(3,1), 
+         yticks=x == out2[1] ? (0:0.2:1) : false)
+end 
+plot(ps..., layout=(1,length(ms2)), size=(750,350), left_margin=4Plots.mm,
+     right_margin=-3Plots.mm, tickfont=7)
+
+ps = map(out31) do X
+    map(X) do x
+        ss, hs, ws, _ = x
+        xs = collect(zip(-ss, hs))
+        ys = sample(xs, Weights(ws), 100000)
+        kd = kde((first.(ys), last.(ys)), bandwidth=(0.007, 0.03))
+        plot(kd, xlims=(0,0.06), ylims=(0,1), colorbar=false)
+    end
+end |> x->vcat(x...)
+plot(ps...)
+
+
+# Do simulation
+# =============
+
+
+# Independent model
+# -----------------
+out12 = tmap(Lss) do Ls
+    L = ceil(Int, Ls / s)
+    n = nL/L
+    map(mms) do ms
+        @info Ls, ms, L, n
+        ss, hs, ws, df = msedfe1(dfe1, L, N, k, u, ms*s, n=n)
     end
 end
-Ps = vcat(Ps...)
-plot(Ps...)
-
 
 
 # Logistic model
 # --------------
-
-dfe2 = Logisticsbyh(Gamma(κ, 1/λ), (s/2, 0.5), (0.1, 0.99), 1.)
-out21 = tmap(Lss) do Ls
+out21 = map(Lss) do Ls
     L = ceil(Int, Ls / s)
-    map(mms) do ms
+    n = nL/L
+    tmap(mms) do ms
         @info Ls, ms
-        ss, hs, ws, df = msedfe1(dfe2, L, N, k, u, ms*s, n=1000)
+        ss, hs, ws, df = msedfe1(dfe2, L, N, k, u, ms*s, n=n)
     end
 end
-
-PP2 = doplot1(out21, Lss, mms)
 
 # Caballero & Keightley model
 # ---------------------------
-
-out3 = map(Lss) do Ls
+out31 = map(Lss) do Ls
     L = ceil(Int, Ls / s)
+    n = nL/L
     map(mms) do ms
-        E1, Y1 = msedfe(dfe, ss, hs, L, N, k, u, ms*s, n=n)
-        @info Ls, ms
-        E1, Y1
+        msedfe1(dfe3, L, N, k, u, ms*s, n=n)
     end
 end
-
-dfe3 = CKGamma(κ, λ, 1/3)
-out31= map(Lss) do Ls
-    L = ceil(Int, Ls / s)
-    map(mms) do ms
-        msedfe1(dfe3, L, N, k, u, ms*s, n=1000)
-    end
-end
-
-doplot1(out31, Lss, mms)
-
 
 # Differentiation compared to single-locus
 # ---------------------------------------
@@ -381,12 +466,12 @@ Py = plot(Ps..., cb, layout=grid(1,4, widths=[0.33,0.33,0.33,0.01]), size=(700,1
 # ================
 L = 100
 s̄ = 0.01
-nrep = 50
+nrep = 100
 Nes = 10
 k = 5
 N = _Ne2N(Nes/s̄, k)
 u = s̄*0.005
-ms = [0.05, 0.1, 0.2]
+ms = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 κs = [8, 4, 2, 1, 1/2, 1/4]
 res = map(ms) do m
     ps = map(κs) do κ
@@ -441,7 +526,7 @@ P3 = plot(P3, title="(C)", legend=false, tickfont=7)
 
 P2 = plot(title="(B)")
 map(κ->plot!(Gamma(κ, s̄/κ), label="\$\\kappa = $κ\$"), κs)
-plot!(ylabel="density", tickfont=7, xlim=(0,0.05), ylim=(0,200), legend=:topright, xlabel="\$s\$", legendfont=6)
+plot!(ylabel="density", tickfont=7, xlim=(0,0.0505), ylim=(0,200), legend=:topright, xlabel="\$s\$", legendfont=6)
 
 al = ["8", "4", "2", "1", "\$\\frac{1}{2}\$", "\$\\frac{1}{4}\$"]
 P1 = plot(title="(A)")
@@ -449,7 +534,8 @@ n1 = length(κs)
 n2 = length(ms)
 zs = map(enumerate(zip(ms, res))) do (j,(m, xys))
     y1, y2, xs = xys
-    annotate!((j-1)*n1 + 0.6, 1.04, text("\$m/\\bar{s}=$m\$", 9, :left))
+    ll = j == 1 ? "\$m/\\bar{s}=$m\$" : "\$$m\$"
+    annotate!(j*n1 + 0.6, 1.04, text(ll, 9, :right))
     ys = map(enumerate(zip(κs, xs))) do (i,(α, x_))
         x = first.(x_)
         y = last.(x_)
@@ -470,8 +556,8 @@ plot!(xticks=(1:n1*n2, repeat(al, n2)), xtickfont=7, xlim=(0.5,n1*n2 + 0.5),
       xlabel="\$\\kappa\$", ylabel="\$\\mathbb{E}[p]\$", size=(350,250),
       legend=false, top_margin=3Plots.mm)
 
-plot(P1, plot(P2, P3, layout=(2,1)), titlefont=7,
-     layout=grid(1,2,widths=[0.7,0.3]), size=(520,260))
+plot(P1, plot(P2, P3, layout=(2,1)), titlefont=7, margin=2Plots.mm,
+     layout=grid(1,2,widths=[0.78,0.22]), size=(650,260))
 
 
 
@@ -511,7 +597,7 @@ res = map(ms) do m
 end
 
 al = ["8", "4", "2", "1", "\$\\frac{1}{2}\$", "\$\\frac{1}{4}\$"]
-plot()
+P1 = plot()
 n1 = length(αs)
 n2 = length(ms)
 map(enumerate(zip(ms, res))) do (j,(m, xys))
@@ -531,7 +617,43 @@ plot!(xticks=(1:n1*n2, repeat(al, n2)), xtickfont=7, xlim=(0.5,n1*n2 + 0.5),
       xlabel="\$\\alpha\$", ylabel="\$\\mathbb{E}[p]\$", size=(350,250),
       legend=false, top_margin=3Plots.mm)
 
+P2 = plot(title="(B)")
+map(α->plot!(Beta(α, α), label="\$\\alpha = $α\$"), αs)
+plot!(ylabel="density", tickfont=7, xlim=(0,1), ylim=(0,6),
+      legend=:outertopright, xlabel="\$h\$", legendfont=6)
+
+P3 = plot()
+m = 0.3
+ps = map(αs) do α
+    df = IndependentDFE(Dirac(s̄), Beta(α,α))
+    A  = Architecture([randlocus(df) for i=1:L])
+    hs = [l.s01/l.s11 for l in A.loci]
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+    P,_= fixedpointit(M, ones(L));
+    pm = P[end,:,1];
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+    P,_= fixedpointit(M, ones(L));
+    pm = P[end,:,1];
+    plot!(sort(pm, rev=true), line=:steppost, legend=:topright, 
+          label="\$\\alpha=$α\$", ylabel="\$\\mathbb{E}[p]\$", xlabel="locus")
+end
+A  = Architecture(DipLocus(-s̄/2, -s̄), L)
+M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+P,_= fixedpointit(M, ones(1));
+pm = P[end,1,1];
+A  = Architecture(DipLocus(-s̄/2, -s̄), 1)
+M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+P,_= fixedpointit(M, ones(1));
+p1 = P[end,1,1];
+hline!([pm], ls=:solid, color=:black, alpha=0.5)
+hline!([p1], ls=:dash, color=:black, alpha=0.5)
+P3 = plot(P3, title="(C)", legend=false, tickfont=7, ylim=(0,1))
+
+plot(P1, plot(P2, P3, layout=(2,1)), titlefont=7,
+     layout=grid(1,2,widths=[0.7,0.3]), size=(620,260), margin=2Plots.mm)
+
 # Swamping thresholds
+# ===================
 L = 100
 s̄ = 0.01
 Nes = 10

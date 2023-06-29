@@ -135,3 +135,25 @@ function pdfh(d::CKGamma, h)
     (β/(β - K))^α * cdf(Gamma(α, 1/(β - K)), -log(1-h)/K) 
 end
 
+struct AWGamma{T,V<:Distribution,W<:Distribution}
+    sd::V
+    hd::W
+    β1::T
+    β2::T
+end
+
+AWGamma(sd, δ, Vh, β1, β2) = AWGamma(sd, Gamma(δ^2/Vh, Vh/δ), β1, β2)
+
+function randlocus(M::AWGamma)
+    s = rand(M.sd)
+    g = rand(M.hd)
+    h = g - mean(M.hd) + M.β1/(1 + M.β2*s)
+    DipLocus(-s*h, -s)
+end
+
+function pdfh(dfe::AWGamma, h)
+    @unpack sd, hd, β1, β2 = dfe
+    d = mean(hd)
+    I, _ = quadgk(s->pdf(sd, s)*pdf(hd, h + d - β1/(1+β2*s)), 0, 1.)
+    return I
+end

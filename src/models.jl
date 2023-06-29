@@ -5,6 +5,8 @@
 #   rather tricky to implement...
 # - Selection is encoded by the genetic architecture in each local deme. 
 # - We assume biallelic loci and symmetric and equal mutation rates.
+# - The current implementation makes it a bit of a pain to have migration at
+#   the diploid stage...
 
 # Data structures for IBM
 Genome{T}     = Vector{T} 
