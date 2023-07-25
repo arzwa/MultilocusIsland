@@ -455,6 +455,11 @@ $if(abstract)$
 $abstract$
 \end{abstract}
 $endif$
+$if(keywords)$
+\small
+\textbf{Key words:} $keywords$
+\normalsize
+$endif$
 $endif$
 
 $for(include-before)$
