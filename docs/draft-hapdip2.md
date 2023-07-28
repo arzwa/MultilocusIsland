@@ -44,19 +44,19 @@ abstract: "
     general biphasic life cycle, encompassing haploid and diploid models as
     special cases. 
     We quantify the strength of a multilocus barrier to gene flow due to
-    divergent local adaptation at $L$ unlinked weakly selected loci, and obtain
+    divergent local adaptation at $L$ unlinked and weakly selected loci, and obtain
     predictions for the equilibrium frequencies of locally adaptive alleles
     with arbitrary dominance and haploid-phase selection, accounting for
     genetic drift using a diffusion approximation.     
     We extend classical single locus results on the role of dominance in the
     mainland-island model to the multilocus case, highlighting how linkage
-    disequilibrium in multilocus barriers has rather different effects for
-    recessive alleles compared to dominant ones.
+    disequilibrium in multilocus barriers has rather different effects on
+    differentiation and swamping thresholds for recessive alleles compared to
+    dominant ones.
     Details about the biphasic life cycle can be captured through a set of
     effective parameters, and we show that for the same total strength of
-    selection over the life cycle, increasing teh relative intensity of
-    selection in the haploid phase leads to stronger differentiation in the
-    face of gene flow.
+    selection over the life cycle, increasing the relative intensity of
+    selection in the haploid phase leads to stronger barriers to gene flow.
     We study the effect of heterogenous genetic architectures of local
     adaptation on the resulting barrier to gene flow, characterizing the
     realized genetic architecture at migration-selection balance for different
@@ -101,8 +101,8 @@ This in turn will affect the equilibrium migration load and swamping thresholds
 for the loci under selection.
 Neutral variation may also come to be associated with locally selected alleles,
 so that the latter constitute a 'barrier' to neutral gene flow, increasing
-neutral genetic differentiation (as quantified by $F_{ST}$ for instance) beyond the
-single locus neutral expectation [@bengtsson1985].
+neutral genetic differentiation (as quantified by $F_{\mathrm{ST}}$ for
+instance) beyond the single locus neutral expectation [@bengtsson1985].
 
 Barrier effects due to divergent local adaptation at many loci may play an
 important role in the evolution of reproductive isolation, and hence speciation
@@ -113,12 +113,12 @@ divergence from its ancestors [@barton2018].
 Conditional on the initial succesful establishment of such a divergent
 subpopulation through polygenic adaptation, whether or not speciation ensues
 depends on the migration rate and the extent to which local adaptation can be
-maintained in the face of maladaptive gene flow, and to what extent the partial
-reproductive isolation deriving from local adaptation may promote further
-divergence and strengthen reproductive isolation, either through reinforcement,
-coupling with intrinsic incompatibilities, or the establishment of additional
-locally beneficial mutations [@barton2009; @bierne2011; @butlin2018;
-@kulmuni2020].
+maintained in the face of maladaptive gene flow (if any), and to what extent
+the partial reproductive isolation deriving from local adaptation may promote
+further divergence and strengthen reproductive isolation, either through
+reinforcement, coupling with intrinsic incompatibilities, or the establishment
+of additional locally beneficial mutations [@barton2009; @bierne2011;
+@butlin2018; @kulmuni2020].
 In this paper, we focus on the conditions under which polygenic local
 adaptation can be maintained in the face of maladaptive gene flow.
 
@@ -145,7 +145,7 @@ dominance and epistasis) that are either unlinked or uniformly spread along a
 block of genome [@barton1983; @fraisse2021b; @sachdeva2022]; and statistical
 approaches for the inference of gene flow across the genome either make
 similarly crude assumptions [@aeschbacher2017], or ignore the genetic details
-of local adaptation altogether [@fraisse2021; @laetsch2022].
+of local adaptation altogether [@roux2013; @fraisse2021; @laetsch2022].
 
 In a recent paper, @sachdeva2022 showed that, when the loci under selection are
 unlinked, the effects of LD on equilibrium differentiation at any individual
@@ -166,7 +166,7 @@ a haploid sexual life cycle and $L$ divergently selected loci of equal effect.
 The general theoretical framework outlined in @sachdeva2022 is however readily
 extended to deal with more complicated genetic architectures.
 In this paper, we derive an expression for the effective migration rate for a
-polygenic genetic architecture with arbitrary fitness effects and dominance
+polygenic genetic architecture with arbitrary fitness and dominance effects
 across loci (referred to as a *heterogeneous* architecture or barrier) in a
 population with a haplodiplontic life cycle (which includes haplontic and diplontic
 life cycles as special cases).
@@ -266,8 +266,8 @@ When $s_1 = 0$, we obtain the standard diploid mainland-island model, which is
 commonly parameterized in terms of a dominance coefficient $h$ and selection
 coefficient $s$, so that $s_{01} = sh$ and $s_{11} = s$.
 When $s_1 \ne 0$ (i.e. there is selection in the haploid phase), this allows us
-to define an effective selection coefficient $s_e = s_1 + 2s_{11}$ and
-dominance coefficient $h_e = \frac{s_1 + s_{01}}{2s_1 + s_11}$, so that, at
+to define an effective selection coefficient $s_e = 2s_1 + s_{11}$ and
+dominance coefficient $h_e = \frac{s_1 + s_{01}}{2s_1 + s_{11}}$, so that, at
 least when selection is sufficiently weak, the single locus dynamics for an
 arbitrary haplodiplontic life cycle can be described by the standard diploid
 model with these effective parameters.
@@ -277,7 +277,7 @@ The equilibria of @eq:ode are analyzed in detail in @sec:mieq.
 ### Diffusion approximation to the stochastic dynamics
 
 Still considering a single focal locus, we now account for the effects of
-sampling drift.
+drift.
 Denoting by $X_n$ the number of $A_1$ copies in the $n$th haploid generation,
 and by $Y_n^{(ij)}$ the number of $A_iA_j$ genotypes in the $n$th diploid 
 generation, the life cycle as outlined in @sec:model entails the following
@@ -294,16 +294,24 @@ diploid generation respectively, and where $\HW(N,p)$ refers to the multinomial
 distribution with Hardy-Weinberg proportions at allele frequency $p$ for
 population size $N$.
 Note that one unit of time corresponds to a single *alternation* of
-generations, involving two sampling stages: first we sample diploid genotypes
-from the random union of fitness-weighted haploid genotypes (@eq:mc1), next we
-sample haploid spores by randomly drawing gene copies from the diploid
-genotypes that survive diploid selection (@eq:mc2).
+generations, involving two sampling stages: first we sample diploid genotypesi
+($Y$) from the random union of fitness-weighted haploid genotypes (@eq:mc1),
+next we sample haploid spores ($X$) by randomly drawing gene copies from the
+diploid genotypes that survive diploid selection (@eq:mc2).
 This model is akin to the standard Wright-Fisher (WF) model with variable
 population size, regularly alternating between $N$ and $2Nk$ gene copies.
 The corresponding effective population size is hence $N_e = (N^{-1} +
 (2Nk)^{-1})^{-1}$, twice the harmonic mean of the phase-specific number of gene
 copies [@hein2004] (twice because our unit of time is an alternation of
 generations, not a single generation). 
+
+\hl{Here Himani suggested to write the neutral version instead of (2) and (3).
+I kind of like this because it shows clearly (to me) how the haplodiplontic
+life cycle is implemented (this is exactly the individual-based model for
+$L=1$), and I always think about the discrete-time models first (I'm not really
+able to write down continuous-time stuff without going through the limiting
+process in my mind). Anyway, I guess the paragraph could also be removed
+altogether?}
 
 When evolutionary forces are sufficiently weak, diffusion theory can be applied
 to approximate the equilibrium allele frequency distribution implied by the
@@ -397,7 +405,10 @@ Hence, we have $\Ex[q_{i,k}] = \frac{1}{2^k}(q_{M,i} + (2^k - 1)\Ex[q_i])$,
 where $q_{M,i} = q_{0,i}$ is the mainland frequency.
 Denoting the selection coefficient at locus $i$ for the haploid phase by
 $s_{i1}$, we can use this to derive the expected relative fitness of a $k$th
-generation haploid descendant:
+generation haploid descendant: (\hl{Here, Himani suggested to drop the first
+three lines and only show the last line, but as above, I'm inclined not to do
+so, because these are really the steps I go through in my head whenever I would
+derive this...})
 \begin{align*}
 \Ex[W_{h,k}] 
   &= \Ex\left[\frac{\prod_{i=1}^L(p_{k,i} + q_{k,i}e^{s_{i1}})}
@@ -405,7 +416,7 @@ generation haploid descendant:
   &= \frac{\prod_{i=1}^L\Ex\left[1 - q_{k,i}(1 - e^{s_{i1}})\right]}
           {\prod_{i=1}^L\Ex\left[1 - q_i (1 - e^{s_{i1}})\right]} \\
   &\approx \exp\left[\sum_{i=1}^L s_{i1}\Ex[q_{k,i} - q_i]\right] \\
-  &= \exp\left[2^{-k}\sum_{i=1}^L s_{i1}(q_{M,i} - \Ex[q_i])\right]
+  &= \exp\left[2^{-k}\sum_{i=1}^L s_{i1}(q_{M,i} - \Ex[q_i])\right],
 \end{align*}
 where we have assumed that per-locus selection is sufficiently weak so that
 terms which are $O(s^2)$ can be ignored.
@@ -428,7 +439,8 @@ g
     2^{-k}\sum_{i=1}^L s_{i,a}(q_{M,i} - \Ex[q_i]) - 
     s_{i,b}(p_{M,i}\Ex[q_i] - \Ex[p_iq_i])\right] \nonumber \\
 &=\exp\left[2\sum_{i=1}^L 
-    s_{i,a}(q_{M,i} - \Ex[q_i]) - s_{i,b}(p_{M,i}\Ex[q_i] - \Ex[p_iq_i])\right] 
+    s_{i,a}(q_{M,i} - \Ex[q_i]) - s_{i,b}(p_{M,i}\Ex[q_i] -
+    \Ex[p_iq_i])\right],
     \label{eq:gff}
 \end{align}
 where, similarly, $s_{i,a} = s_{i1} + s_{i01}$.
@@ -449,7 +461,7 @@ If we assume all loci to have the same selection coefficient (a *homogeneous
 barrier*), and that the mainland is fixed for the locally deleterious allele on
 the island, the gff simplifies to
 \begin{equation}
-  g = e^{2L(s_a \Ex[p] + s_b \Ex[pq])}
+  g = e^{2L(s_a \Ex[p] + s_b \Ex[pq])},
   \label{eq:eqeff}
 \end{equation}
 where $\Ex[p]$ and $\Ex[pq]$ are the expected beneficial allele frequency and
@@ -485,7 +497,8 @@ If we wish to calculate the effective migration rate for a selected locus in
 the barrier, say locus $j$, the relevant gff is
 \begin{equation}
     g_j = \exp\left[2 \sum_{i\ne j}^L 
-    s_{i,a}(q_{M,i} - \Ex[q_i]) - s_{i,b}(p_{M,i}\Ex[q_i] - \Ex[p_iq_i])\right] 
+    s_{i,a}(q_{M,i} - \Ex[q_i]) - s_{i,b}(p_{M,i}\Ex[q_i] -
+    \Ex[p_iq_i])\right],
     \label{eq:gff2}
 \end{equation}
 where we have assumed that the gff at a selected locus is the same as that of a
@@ -493,7 +506,7 @@ neutral locus at the same location -- an assumption which is only expected to
 work well if selection at the focal locus is sufficiently weak.
 Secondly, as in the model outlined in @sec:model, we have assumed that
 migration occurs at the start of the haploid phase, reflecting a process such
-as spore dispersal in bryophytes, pteridophytes or Fungi.
+as spore dispersal in bryophytes, pteridophytes or fungi.
 However, it should be emphasized that, while the details of when migration
 occurs in the life cycle do not matter for the single locus model as long as
 selection and migration are sufficiently weak (so that the continuous-time
@@ -514,7 +527,7 @@ appropriate gff, where
     \frac{e^{\sum_i^L 2p_{M,i}q_{M,i}s_{i,01} + q_{M,i}^2
         s_{i,11}}}{e^{\sum_i^L2\Ex[p_iq_i]s_{i,01} + \Ex[q_i^2]s_{i,11}}}
     = \exp\left[\sum_{i=1}^Ls_{i11}(q_{M,i} - \Ex[q_i]) - 
-    s_{b,i}(p_{M,i}q_{M,i} - \Ex[p_iq_i])\right]
+    s_{b,i}(p_{M,i}q_{M,i} - \Ex[p_iq_i])\right].
 \end{equation*}
 If the haploid, diploid and gametic migration rates are $m_1, m_2$ and $m_3$
 respectively, the effective migration rate will be $(m_1 + \Ex[W_{d,0}] m_2 +
@@ -546,7 +559,7 @@ for $m$ in @eq:ode.
 Specifically, we get a system of $L$ coupled differential equations, where for
 $1 \le j \le L$,
 \begin{equation}
-   \dot{p_j} = -m g_j[p_{-j}]p_j - q_j(s_{a,j}p_j + s_{b,j}p_jq_j)\ ,
+   \dot{p_j} = -m g_j[p_{-j}]p_j - q_j(s_{a,j}p_j + s_{b,j}p_jq_j),
    \label{eq:odeme}
 \end{equation}
 and we have assumed the mainland to be fixed for the deleterious allele
@@ -566,7 +579,7 @@ Specifically, we postulate that the joint distribution of allele frequencies in
 the barrier factorizes as
 \begin{align}
   \phi(p) = Z^{-1} \prod_{j=1}^L \phi_j(p_j|p_{-j}) = 
-    Z^{-1}\prod_{j=1}^L \phi(p_j; N_e, u, mg_j[p_{-j}], s_j)
+    Z^{-1}\prod_{j=1}^L \phi(p_j; N_e, u, mg_j[p_{-j}], s_j),
   \label{eq:mrf}
 \end{align}
 where $Z$ is a normalizing constant and $\phi$ was defined in @eq:phi.
@@ -1104,9 +1117,9 @@ threshold for recessives (which are associated with higher equilibrium
 frequencies) or not (@fig:betas).
 
 ![
-\uline{(A)} Deviation of predicted allele frequencies for loci in heterogeneous
-polygenic barriers when accounting for LD (multilocus) from predictions based
-on single locus diffusion theory. 
+\uline{(A)} Deviation of predicted expected allele frequencies for loci in
+heterogeneous polygenic barriers when accounting for LD ($y$-axis)
+from predictions based on single locus diffusion theory ($x$-axis). 
 The \uline{rows} show results for different total strengths of selection (different
 number of loci $L\bar{s}$ with $\bar{s} = 0.01$), whereas the \uline{columns} show
 results for increasing rates of migration relative to selection ($m/\bar{s}$).
@@ -1121,8 +1134,8 @@ $150000/L$ simulations of $L$-locus barriers.
 dominance coefficient conditional on observing a divergent allele on the island
 (i.e. $f(s_i|X_i=1)$ and $f(h_i|X_i=1)$, see @eq:msbdfe). The distribution graphed
 in gray shows $f_\text{DFE}$, i.e. the marginal distribution of the selection
-and dominance coefficient for a random locus in the $L$-locus barrier (not
-considering migration).
+and dominance coefficient for a random locus in the $L$-locus barrier in the
+absence of migration.
 We assumed $N_e\bar{s} = 20$ and $u/\bar{s} = 0.005$ for all results.
 \label{fig:diffdetail}
 ](/home/arthur_z/vimwiki/build/img/2023-06-25/dfe1.svg)
@@ -1166,7 +1179,7 @@ the island for that locus, i.e.
 \begin{align}
   f(s_i,h_i|X_i=1) 
   &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
-  \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB
+  \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB,
   \label{eq:msbdfe}
 \end{align}
 where $f_\text{DFE}$ denotes the joint density of the selection and dominance
@@ -1214,8 +1227,8 @@ migration increases so that swamping effects become relevant, the correlation
 coefficient can become as large as $0.25$, depending on $L\bar{s}$.
 
 ![
-The realized genetic architecture of local adaptation for different DFE models
-for increasing strength of migration.
+The distribution of fitness effects (DFE) affects the realized genetic
+architecture of local adaptation at migration-selection balance.
 Contour plots for the joint density of $h$ and $s$ conditional on observing a
 divergent allele on the island (see @eq:msbdfe) are shown for the three DFE
 models (\uline{rows}) for increasing rates of migration (\uline{columns}).
@@ -1304,8 +1317,8 @@ by the gene flow factor $g$, or the associated effective migration rate $m_e =
 mg$, which accounts for the (potentially quite strong) selection against
 migrant genotypes and the rapid break up of LD among surviving invading alleles
 [@barton1986; @sachdeva2022].
-Although challenging to measure, it should be noted that $g$ is a macroscopic
-quantity that can be experimentally determined.
+Although challenging, it should be noted that $g$ has a phenotypic
+interpretation, and can in principle be experimentally determined.
 
 We derived an expression for the effective migration rate in a mainland-island
 model with heterogeneous barriers and different life cycles, and showed how it
@@ -1364,8 +1377,8 @@ It should be emphasized, however, that all our results assume a mainland-island
 model of migration.
 The effects of dominance may turn out more subtle in models of population
 subdivision with multiple demes and more symmetric patterns of migration, in
-which case assumptions on environmental dependence of dominance become of
-importance [e.g.  @burger2013].
+which case assumptions on environmental dependence of dominance may become 
+important [e.g.  @burger2013].
 
 We developed our theory for a fairly general haplodiplontic life cycle, and
 showed that a model with selection in both the haploid and diploid phase can be
@@ -1455,7 +1468,7 @@ maximum likelihood inference of $m_e$ in windows along the genome, providing a
 model-based alternative to the popular $F_{\mathrm{ST}}$-based genome scans.
 Both approaches do not explicitly model aspects of the underlying genetic
 architecture of divergent selection that is assumed to cause variation in
-introgression probabilities across the genome.
+$m_e$ (and hence introgression probability) across the genome.
 So far, the only approach which has attempted to do so is the one proposed by
 @aeschbacher2017, where the authors combined information about local
 recombination rates together with deterministic population genetics theory

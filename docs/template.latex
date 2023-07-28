@@ -457,7 +457,7 @@ $abstract$
 $endif$
 $if(keywords)$
 \small
-\textbf{Key words:} $keywords$
+\textbf{Keywords:} $keywords$
 \normalsize
 $endif$
 $endif$
