@@ -88,7 +88,7 @@ end
 function singlelocuseq(M)
     map(1:length(M.D.A)) do i
         DD = reconstruct(M.D, A=M.D.A[i:i])
-        MM = MainlandIslandModel(DD, M.m, ones(1))
+        MM = MainlandIslandModel(DD, M.m1)
         P,_= fixedpointit(MM, ones(1))
         P[end,:,1]
     end |> x->first.(x)
@@ -106,7 +106,7 @@ function msedfe1(dfe, L, N, k, u, m; n=100)
         sb = [l.s11 - 2l.s01 for l in A.loci]
         ss = [l.s11 for l in A.loci]
         hs = [l.s01/l.s11 for l in A.loci]
-        M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m, ones(L))
+        M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m)
         P,_= fixedpointit(M, ones(L));
         pm = P[end,:,1];
         ps = singlelocuseq(M);
@@ -301,6 +301,7 @@ dfe1 = IndependentDFE(Gamma(κ, 1/λ), Beta(2,1))
 dfe2 = Logisticsbyh(Gamma(κ, 1/λ), (s/4, 0.5), (0.1135, 0.99), 1.)
 quadgk(h->h*MultilocusIsland.pdfh(dfe2, h), 0, 1)
 dfe3 = CKGamma(κ, λ, 1/3)
+dfe4 = MultilocusIsland.CKGamma2(κ, λ, 1/3)
 nL   = 75000
 
 function thevar(dfe)
@@ -316,7 +317,7 @@ thevar(dfe2)
 
 
 plot()
-map(zip([dfe1, dfe2, dfe3], ["independent", "logistic", "CK94"])) do (df, lab)
+map(zip([dfe1, dfe2, dfe3, dfe4], ["independent", "logistic", "CK94", "CK94b"])) do (df, lab)
     plot!(0:0.01:1, h->MultilocusIsland.pdfh(df, h), fill=true,
           fillalpha=0.2, label=lab, legend=:topleft, xlabel="\$h\$")
 end
@@ -336,6 +337,11 @@ out2 = tmap(ms2) do ms
     (x1, x2, x3)
 end
 
+out2 = tmap(ms2) do ms
+    L  = 80
+    @info ms
+    x4 = msedfe1(dfe4, L, N, k, u, ms*s, n=n)
+end
 
 ps = map(enumerate(out2)) do (j,x)
     pp = map(enumerate(zip([dfe1, dfe2, dfe3], x))) do (i,(dfe, y))
@@ -352,7 +358,7 @@ ps = map(enumerate(out2)) do (j,x)
              xticks = dfe == dfe3 ? (0:0.02:0.06) : false,
              xlabel = dfe == dfe3 ? "\$s\$" : "", 
              ylabel = x == out2[1] ? "$ll\n\$h\$" : "")
-        annotate!(0.058, 0.12, text("\$\\Delta = $dd\$", 8, :right))
+        annotate!(0.058, 0.12, text("\$\\bar{\\Delta} = $dd\$", 8, :right))
 #        histogram2d(first.(ys), last.(ys), bins=(0:0.005:0.06, 0:0.05:1), colorbar=false)       
     end
     plot(pp..., layout=(3,1), 
@@ -361,16 +367,23 @@ end
 plot(ps..., layout=(1,length(ms2)), size=(750,350), left_margin=4Plots.mm,
      right_margin=-3Plots.mm, tickfont=7)
 
-ps = map(out31) do X
-    map(X) do x
-        ss, hs, ws, _ = x
-        xs = collect(zip(-ss, hs))
-        ys = sample(xs, Weights(ws), 100000)
-        kd = kde((first.(ys), last.(ys)), bandwidth=(0.007, 0.03))
-        plot(kd, xlims=(0,0.06), ylims=(0,1), colorbar=false)
-    end
+ps = map(out2) do x
+    ss, hs, ws, _ = x
+    D = sum(ws) / (n*80)
+    dd = @sprintf "%.2f" D
+    xs = collect(zip(-ss, hs))
+    ys = sample(xs, Weights(ws), 100000)
+    kd = kde((first.(ys), last.(ys)), bandwidth=(0.007, 0.03))
+    plot(kd, xlims=(0,0.06), ylims=(0,1), 
+         levels=7, colorbar=false, ylabel=x == out2[1] ? "\$h\$" : "")
+    annotate!(0.058, 0.88, text("\$\\Delta = $dd\$", 8, :right))
 end |> x->vcat(x...)
-plot(ps...)
+plot(ps..., layout=(1,6), size=(750,115), xlim=(0,0.0605),
+     xlabel="\$s\$", 
+     right_margin=-3Plots.mm, 
+     left_margin=3Plots.mm, 
+     bottom_margin=3Plots.mm,
+     tickfont=7, xticks=0.0:0.02:0.06)
 
 
 # Do simulation
@@ -480,7 +493,7 @@ res = map(ms) do m
             df = IndependentDFE(Gamma(κ, s̄/κ), Dirac(0.5)) #Beta(1,1))
             A  = Architecture([randlocus(df) for i=1:L])
             hs = [l.s01/l.s11 for l in A.loci]
-            M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+            M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
             P,_= fixedpointit(M, ones(L));
             pm = P[end,:,1];
             ps = singlelocuseq(M);
@@ -488,41 +501,46 @@ res = map(ms) do m
         end 
     end
     A  = Architecture(DipLocus(-s̄/2, -s̄), L)
-    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
     P,_= fixedpointit(M, ones(1));
     pm = P[end,1,1];
     A  = Architecture(DipLocus(-s̄/2, -s̄), 1)
-    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
     P,_= fixedpointit(M, ones(1));
     p1 = P[end,1,1];
     pm, p1, ps
 end
 
-P3 = plot()
-m = 0.1
-ps = map(κs) do κ
-    df = IndependentDFE(Gamma(κ, s̄/κ), Dirac(0.5)) #Beta(1,1))
-    A  = Architecture([randlocus(df) for i=1:L])
-    smn, smx = extrema([-l.s11 for l in A.loci])
-    smn = @sprintf "%.3f" smn
-    smx = @sprintf "%.3f" smx
-    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
-    P,_= fixedpointit(M, ones(L));
-    pm = P[end,:,1];
-    plot!(sort(pm, rev=true), line=:steppost, legend=:topright, 
-          label="\$\\kappa=$κ\$", ylabel="\$\\mathbb{E}[p]\$", xlabel="locus")
+# Var[s] = E[s]/κ^2 <=> σ(s) = 0.1 ./ κs = [0.0125, 0.025, 0.05, 0.1, 0.2, 0.4]
+
+P3s = map(zip(["B","C"],[0.1,0.4])) do (ll,m)
+    P3 = plot()
+    ps = map(κs) do κ
+        df = IndependentDFE(Gamma(κ, s̄/κ), Dirac(0.5)) #Beta(1,1))
+        A  = Architecture([randlocus(df) for i=1:L])
+        ss = [-l.s11 for l in A.loci]
+        smn, smx = extrema(ss)
+        smn = @sprintf "%.3f" smn
+        smx = @sprintf "%.3f" smx
+        M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
+        P,_= fixedpointit(M, ones(L));
+        pm = P[end,:,1];
+        oo = sortperm(pm, rev=true)
+        plot!(pm[oo], line=:steppost, legend=:topright, 
+              label="\$\\kappa=$κ\$", ylabel="\$\\mathbb{E}[p]\$", xlabel="locus")
+    end
+    A  = Architecture(DipLocus(-s̄/2, -s̄), L)
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
+    P,_= fixedpointit(M, ones(1));
+    pm = P[end,1,1];
+    A  = Architecture(DipLocus(-s̄/2, -s̄), 1)
+    M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, 0., ones(L))
+    P,_= fixedpointit(M, ones(1));
+    p1 = P[end,1,1];
+    hline!([pm], ls=:solid, color=:black, alpha=0.5)
+    hline!([p1], ls=:dash, color=:black, alpha=0.5)
+    P3 = plot(P3, title="($ll) \$m/\\bar{s}=$m\$", legend=false, tickfont=7, ylim=(0,1))
 end
-A  = Architecture(DipLocus(-s̄/2, -s̄), L)
-M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
-P,_= fixedpointit(M, ones(1));
-pm = P[end,1,1];
-A  = Architecture(DipLocus(-s̄/2, -s̄), 1)
-M  = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=A), m*s̄, ones(L))
-P,_= fixedpointit(M, ones(1));
-p1 = P[end,1,1];
-hline!([pm], ls=:solid, color=:black, alpha=0.5)
-hline!([p1], ls=:dash, color=:black, alpha=0.5)
-P3 = plot(P3, title="(C)", legend=false, tickfont=7)
 
 P2 = plot(title="(B)")
 map(κ->plot!(Gamma(κ, s̄/κ), label="\$\\kappa = $κ\$"), κs)
@@ -553,11 +571,16 @@ map(enumerate(zip(ms, res, zs))) do (j,(m, xys, z))
 end
 vline!((n1+0.52):n1:n2*n1, color=:black, ylim=(0,1), label="")
 plot!(xticks=(1:n1*n2, repeat(al, n2)), xtickfont=7, xlim=(0.5,n1*n2 + 0.5),
-      xlabel="\$\\kappa\$", ylabel="\$\\mathbb{E}[p]\$", size=(350,250),
+      xlabel="\$\\kappa\$", ylabel="\$\\bar{\\Delta}\$", size=(350,250),
       legend=false, top_margin=3Plots.mm)
 
-plot(P1, plot(P2, P3, layout=(2,1)), titlefont=7, margin=2Plots.mm,
+PP = plot(P1, plot(P3s..., layout=(2,1)), titlefont=9, margin=2Plots.mm,
      layout=grid(1,2,widths=[0.78,0.22]), size=(650,260))
+plot!(PP, inset=(1, bbox(0.36, -0.29, 100Plots.px, 70Plots.px, :center)), subplot=4)
+map(κ->plot!(Gamma(κ, s̄/κ), label="\$\\kappa = $κ\$", ylabel="density",
+             tickfont=6, xlim=(0,0.0505), guidefont=7, ylim=(0,200), legend=:topright,
+             xlabel="\$s\$", legendfont=6, subplot=4), κs)
+plot(PP)
 
 
 

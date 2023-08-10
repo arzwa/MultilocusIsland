@@ -6,11 +6,11 @@
 # We also need to compute 𝔼[pq] (i.e. expected heterozygosity) under Wright's
 # distribution.
 function getclasses(M::MainlandIslandModel)
-    @unpack D, m, mainland = M
+    @unpack D, mainland = M
     # get the different classes of loci
     θ = summarize(D.A)
     y = [mainland.p[θ.I[k]] for k in θ.loci] 
-    return (; θ..., m=M.m, y=y, u=D.u, Ne=D.Ne)
+    return (; θ..., m1=M.m1, m2=M.m2, y=y, u=D.u, Ne=D.Ne)
 end
 
 # The gene flow factor at a single locus of a particular class due to the other
@@ -20,26 +20,30 @@ function _gff(xs, w, L, j)
     for i=1:length(xs)
         g += i == j ? (w[i]-1) * xs[i] : w[i] * xs[i]
     end
-    return exp(2g)
+    return g
 end
 
 # Gather all parameters for the single-locus Wright distribution models
 # assocaietd with each class of loci. This also involves computing the
 # effective migration rates for all classes of loci.
 function classparams(classes, p, pq)
-    @unpack m, u, Ne, loci, K, L, γ, y = classes
+    @unpack m1, m2, u, Ne, loci, K, L, γ, y = classes
     xs = map(zip(p, pq, loci, γ, y)) do (pj, pqj, lj, wj, yj)
         @unpack s1, s01, s11 = lj
         # exp(2L[sa(qₘ - Eq) + sb(E[pq] - pₘEq)])
         sa = s1 + s01 
         sb = s11 - 2s01
         qj = 1-pj
-        sa*(yj - qj) + sb*(pqj - (1-yj)*qj) 
+        gj = sa*(yj - qj) + sb*(pqj - (1-yj)*qj)     # haploid migration 
+        g0 = s11*(yj - qj) - sb*((1-yj)*yj - pqj)  # correction diploid migration
+        gj, g0
     end
     map(1:K) do j
         @unpack s1, s01, s11 = loci[j]
-        g = _gff(xs, γ, L, j)
-        (sa=s1+s01, sb=s11-2s01, N=Ne, m=m*g, u=u, pm=1-y[j])
+        g1 = exp(2 * _gff(first.(xs), γ, L, j))
+        g0 = exp(_gff(last.(xs), γ, L, j))
+        g2 = g1*g0
+        (sa=s1+s01, sb=s11-2s01, N=Ne, m=m1*g1 + m2*g2, u=u, pm=1-y[j])
     end
 end
 

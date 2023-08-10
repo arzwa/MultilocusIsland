@@ -5,6 +5,7 @@ theme(:hokusai)
 # Get simulation results for different dominance coefficients (`hs`) and strength
 # of haploid selection (`ts`) in a parameter regime where LD matters (`Ls ~ 1`)
 Ls = 0.8
+Ls = 1.5
 L  = 40
 s  = Ls/L
 Ns = 8.
@@ -15,6 +16,7 @@ ts = 0:0.25:1
 u  = s*0.01
 mss1 = 0.1:0.1:1.1
 mss3 = 0:0.005:1.1
+mss3 = 0:0.005:2.1
 
 # do simulations
 Xs = map(hs) do h
@@ -39,7 +41,7 @@ Zs = map(hs) do h
         @info (t, h)
         arch = Architecture(HapDipLocus(-s*(1-t), -s*h*t, -s*t), L)
         Z = tmap(mss3) do ms
-            M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=arch), ms*s, ones(L))
+            M = MainlandIslandModel(HapDipDeme(N=N, k=k, u=u, A=arch), ms*s) 
             P,_ = fixedpointit(M, [1.0])
             q3 = P[end,1,1]
             (ms, q3)
@@ -61,14 +63,15 @@ for i=1:length(Zs)
     c = cd[t]
     plot!(P, first.(Z), last.(Z), 
           color=c, title="\$h=$h\$",#, L=$L, N_es=$Ns\$", 
-          label="",lw=2.5, alpha=0.3)
-    t, h, X = Xs[i]
-    scatter!(P, first.(X), 1 .- getindex.(X, 2),
-             label="\$\\tau=$(@sprintf "%.2f" t)\$",
-             color=c, markerstrokecolor=c,
-             xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$")
+          label="\$\\tau=$(@sprintf "%.2f" t)\$",
+          lw=2.5, alpha=0.3)
+#    t, h, X = Xs[i]
+#    scatter!(P, first.(X), 1 .- getindex.(X, 2),
+#             label="\$\\tau=$(@sprintf "%.2f" t)\$",
+#             color=c, markerstrokecolor=c,
+#             xlabel="\$m/s\$", ylabel="\$\\mathbb{E}[p]\$")
 end
-plot(values(dd)..., grid=false, ms=3, ylim=(0,1), xlim=(0,1.25),
+plot(values(dd)..., grid=false, ms=3, ylim=(0,1), xlim=(0,Inf),
      margin=3Plots.mm, layout=(1,3), legend=:topright, size=(700,200),
      legendfont=6)
 

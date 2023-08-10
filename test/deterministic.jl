@@ -74,11 +74,23 @@ map(enumerate(zip(hs, xs))) do (i,(h,x))
     hline!([1-h], color=i, ls=:dot, alpha=0.5, label="")
 end
 vline!([1.], ls=:dot, alpha=0.7, color=:gray, label="")
-P2 = plot!(legend=:topleft, ylim=(0,1.25), legendfont=7, bg_legend=:white)
+P2 = plot!(legend=false, ylim=(0,1.25), legendfont=7, bg_legend=:white)
 
 plot(PP..., P2, size=(900,170), layout=(1,4), left_margin=4Plots.mm)
 #savefig("$pth/detdom.svg")
         
+
+fgff(p, Ls, h) = exp(-2Ls*(h*p + (1-2h)*p*(1-p)))  
+
+bPs = map(zip([0.75,1.5], ["(E)", "(F)"])) do (Ls, l)
+    P = plot(title="$l \$Ls=$Ls\$", ylabel="\$b[q]\$", legend=:topright, xlabel="\$q\$")
+    map(enumerate(0:0.25:1)) do (i,h)
+        plot!(0:0.001:1, p->1/fgff(1-p, Ls, h), color=i, lw=2, label="\$h=$(@sprintf "%.2f" h)\$")
+        vline!([(3h-1)/(4h-2)], color=i, label="", ls=:dot, alpha=0.8)
+    end
+    plot(P, xlim=(0,1))
+end 
+plot(PP..., P2, bPs..., size=(620,330), layout=(2,3), left_margin=2Plots.mm, titlefont=9, legendfont=7)
 
 # genetic load (assume stable equilibrium)
 function load(p, s11, sb, L)
@@ -198,7 +210,7 @@ end |> x->plot(x..., layout=(3,1), size=(820,600), framestyle=:origin)
 P = plot()
 PP = map(enumerate([0.5, 1.0])) do (j,h)
     xmx = 1.5
-    lss = [:solid, :dot]
+    lss = [:solid, :dash]
     map(enumerate([0.01,0.25,0.5,0.75,1.,1.25,1.5])) do (i,Lsh)
         s  = 0.01
         sa = -s*h

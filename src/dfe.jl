@@ -135,6 +135,32 @@ function pdfh(d::CKGamma, h)
     (β/(β - K))^α * cdf(Gamma(α, 1/(β - K)), -log(1-h)/K) 
 end
 
+struct CKGamma2{T,V<:Distribution}
+    sd::V
+    h̄::T
+    K::T
+end
+    
+CKGamma2(κ, λ, h̄) = CKGamma2(Gamma(κ,1/λ), h̄, λ*((2h̄)^(-1/κ) - 1))
+
+function randlocus(d::CKGamma2) 
+    s = rand(d.sd)
+    h = rand(Uniform(0, exp(-d.K*s)))  
+    DipLocus(-s*h, -s)
+end
+
+Distributions.pdf(d::CKGamma2, l) = pdf(d, -l.s11, l.s01/l.s11)
+Distributions.pdf(d::CKGamma2, s, h) = h > exp(-s*d.K) ? 0. : pdf(d.sd, s) * exp(s*d.K) 
+Distributions.logpdf(d::CKGamma2, l) = log(pdf(d, l))
+Distributions.logpdf(d::CKGamma2, s, h) = log(pdf(d, s, h))
+ 
+function pdfh(d::CKGamma2, h)
+    β = 1/d.sd.θ
+    α = d.sd.α
+    K = d.K
+    (β/(β - K))^α * cdf(Gamma(α, 1/(β - K)), -log(h)/K) 
+end
+
 struct AWGamma{T,V<:Distribution,W<:Distribution}
     sd::V
     hd::W

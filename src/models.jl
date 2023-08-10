@@ -10,7 +10,7 @@
 
 # Data structures for IBM
 Genome{T}     = Vector{T} 
-Population{T} = Vector{Genome{T}}
+Population{T} = Union{Vector{Genome{T}},Vector{Tuple{Genome{T},Genome{T}}}}
 
 # Local deme model
 # ================
@@ -69,8 +69,11 @@ struct PolymorphicMainland{T} <: Mainland
     p::Vector{T}
 end
 
-sample(rng::AbstractRNG, M::FixedMainland, n) = [copy(M.genotype) for i=1:n]
-sample(rng::AbstractRNG, M::PolymorphicMainland, n) = 
+function sample(rng::AbstractRNG, M::FixedMainland, n)
+    [copy(M.genotype) for i=1:n]
+end
+
+sample(rng::AbstractRNG, M::PolymorphicMainland, n) =
     map(_->[rand(rng) < p ? 1 : 0 for p in M.p], 1:n)
 
 """
@@ -78,13 +81,14 @@ sample(rng::AbstractRNG, M::PolymorphicMainland, n) =
 """
 struct MainlandIslandModel{DD<:Deme,MM<:Mainland}
     D::DD
-    m::Float64     # migration rate
+    m1::Float64     # haploid migration rate
+    m2::Float64     # diploid migration rate
     mainland::MM
 end
 
 nloci(M::MainlandIslandModel) = nloci(M.D)
 
-function MainlandIslandModel(D, m, y::Vector{<:Real})
+function MainlandIslandModel(D, m1, m2=0., y::Vector{<:Real}=ones(Int, length(D.A)))
     if all(y .== 1) 
         M = FixedMainland(y, ones(Int, length(y)))
     elseif all(y .== 0) 
@@ -92,7 +96,7 @@ function MainlandIslandModel(D, m, y::Vector{<:Real})
     else
         M = PolymorphicMainland(y)
     end
-    return MainlandIslandModel(D, m, M)
+    return MainlandIslandModel(D, m1, m2, M)
 end
 
 
@@ -165,11 +169,13 @@ function generation(
         pop  ::Population{T}) where T
     # migration
     pop = migration(rng, pop, model)
-    return reproduction(rng, model.D, pop)
+    pat, mat = haploidphase(rng, model.D, pop)
+    pat, mat = migration(rng, pat, mat, model)
+    pop = diploidphase(rng, model.D, pat, mat)
 end
 
 # This should be shared with mainland-island model.
-function reproduction(
+function haploidphase(
         rng  ::AbstractRNG, 
         model::HapDipDeme, 
         pop  ::Population{T}) where T
@@ -179,22 +185,29 @@ function reproduction(
     wg = haploidfitness(A, pop)
     # sample gametes according to haploid fitness
     idxa = sample(rng, 1:N, Weights(wg), 2Nk, replace=true)
-    dips = Vector{Tuple{Genome{T},Genome{T}}}(undef, Nk)
-    ws   = Vector{Float64}(undef, Nk)
+    pat  = Vector{Genome{T}}(undef, Nk)
+    mat  = Vector{Genome{T}}(undef, Nk)
     for i=1:Nk
-        p1 = pop[idxa[i]] 
-        p2 = pop[idxa[Nk+i]]
-        gt = p1 .+ p2  # diploid genotype
-        ws[i] = diploidfitness(A, gt)
-        dips[i] = (p1, p2)
+        pat[i] = pop[idxa[i]] 
+        mat[i] = pop[idxa[Nk+i]]
     end
+    return pat, mat
+end
+
+function diploidphase(
+        rng  ::AbstractRNG, 
+        model::HapDipDeme, 
+        pat  ::Population{T},
+        mat  ::Population{T}
+        ) where T
+    @unpack N, k, A = model
+    Nk = N*k
+    wd = diploidfitness(A, pat, mat)
     # sample meiospores according to diploid fitness
-    ws   = lognormalize(ws)
-    idxb = sample(rng, 1:Nk, Weights(ws), N, replace=true)
+    idxb = sample(rng, 1:Nk, Weights(wd), N, replace=true)
     pop_ = Vector{Genome{T}}(undef, N)
     for (i,j) in enumerate(idxb)
-        haplotypes = dips[j]
-        pop_[i] = meiosis(rng, A, haplotypes)
+        pop_[i] = meiosis(rng, A, (pat[j], mat[j]))
     end
     mutation!(rng, pop_, model)
     return pop_
@@ -204,6 +217,14 @@ function haploidfitness(A::Architecture{T,V}, pop::Population) where {T,V}
     w = Vector{T}(undef, length(pop))
     for i=1:length(pop)
         w[i] = haploidfitness(A, pop[i])
+    end
+    return lognormalize(w)
+end
+
+function diploidfitness(A::Architecture{T,V}, pat::Population, mat::Population) where {T,V}
+    w = Vector{T}(undef, length(pat))
+    for i=1:length(pat)
+        w[i] = diploidfitness(A, pat[i] .+ mat[i])
     end
     return lognormalize(w)
 end
@@ -227,13 +248,29 @@ function migration(rng::AbstractRNG, pops::Vector{T}, M::FiniteIslandModel) wher
     return newpop
 end
 
-function migration(rng::AbstractRNG, pop, M::MainlandIslandModel)
+function migration(rng::AbstractRNG, pop::Population{T}, M::MainlandIslandModel) where T
     N = length(pop)
-    nmigrants = min(N, rand(rng, Poisson(M.m * N)))  # `min` is needed with strong migration!
+    nmigrants = min(N, rand(rng, Poisson(M.m1 * N)))  # `min` is needed with strong migration!
     migrants  = sample(rng, M.mainland, nmigrants)
     residents = copy.(sample(rng, pop, N - nmigrants, replace=false)) 
     # XXX copy! replace=false!
     return vcat(migrants, residents)
+end
+
+function migration(
+        rng::AbstractRNG, 
+        pat::Population{T}, 
+        mat::Population{T}, 
+        M::MainlandIslandModel) where T
+    N = length(pat)
+    nmigrants = min(N, rand(rng, Poisson(M.m2 * N)))  # `min` is needed with strong migration!
+    mpat = sample(rng, M.mainland, nmigrants)
+    mmat = sample(rng, M.mainland, nmigrants)
+    idx  = sample(rng, 1:N, N - nmigrants, replace=false)
+    rpat = copy.(pat[idx]) 
+    rmat = copy.(mat[idx]) 
+    # XXX copy! replace=false!
+    return vcat(mpat, rpat), vcat(mmat, rmat)
 end
 
 function mutation!(rng::AbstractRNG, pop, model)

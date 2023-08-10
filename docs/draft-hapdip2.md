@@ -559,6 +559,33 @@ The numerical methods used in this paper are also implemented in the Julia
 package available at 
 [`https://github.com/arzwa/MultilocusIsland`](https://github.com/arzwa/MultilocusIsland).
 
+### Realized genetic architecture of local adaptation
+
+To determine the realized genetic architecture of local adaptation at
+migration-selection balance for heterogeneous barriers, we calculate the
+conditional probability density for the selection and dominance coefficient at
+a locus, given that a divergent allele is observed on the island for that
+locus, i.e.
+\begin{align}
+  f(s_i,h_i|X_i=1) 
+  &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
+  \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB,
+  \label{eq:msbdfe}
+\end{align}
+where $f_\text{DFE}$ denotes the joint density of the selection and dominance
+coefficient in the $L$-locus barrier, $X_i$ is an indicator random variable (equalling
+1 when a locally beneficial allele is observed at locus $i$ and zero
+otherwise), $B$ is a shorthand for the selection and dominance coefficients at
+the $L-1$ other loci ('$B$' for background), and we integrate over the set of
+all possible such backgrounds $\mathcal{B}$.
+Note that $f_\text{DFE}$ is equivalent to $f(s_i,h_i|X_i=1)$ in the absence of
+migration.
+For a given DFE model, we can characterize this conditional probability density
+using a Monte Carlo approach by sampling random $L$-locus genetic architectures
+from the DFE and calculating for each $(s_i,h_i)$ pair in the barrier the
+expected beneficial allele frequency $\Ex[p_i|s_i,h_i,B]$ as a weight.
+The weighted sample will be distributed according to $f$.
+
 
 # Results
 
@@ -1058,38 +1085,21 @@ recessive, alleles are protected from swamping in a polygenic setting roughly
 when $L\bar{s} > 1$, although this will also depend on the variance of the
 $s_i$ (cfr. @fig:gammas).
 
-### The realized genetic architecture of local adaptation at migration-selection balance
+### The realized architecture of local adaptation at migration-selection balance
 
-This does not, however, imply that recessives necessarily contribute more to
-local adaptation at migration-selection balance than dominant alleles do.
+Although the above results indicate that, when $Ls$ is appreciable, the effect
+of selective interference is strongest for recessive alleles, this does not,
+however, imply that recessives necessarily contribute more to local adaptation
+at migration-selection balance than dominant alleles.
 Although strongly selected recessives will be associated with strong
-differentiation, weakly selected recessive alleles will be much more prone
-to swamping than partially dominant ones.
+differentiation, weakly selected recessive alleles may be more prone to
+swamping than partially dominant ones.
 One way to quantify how these two phenomena interact to yield the *realized*
 genetic architecture of local adaptation (related to the concept of *adaptive
 architecture*, as defined in @barghi2020)
 is by considering the conditional probability density for the selection and
 dominance coefficient at a locus, given that a divergent allele is observed on
-the island for that locus, i.e.
-\begin{align}
-  f(s_i,h_i|X_i=1) 
-  &= \frac{\Pr\{X_i=1|s_i,h_i\}f_{\mathrm{DFE}}(s_i,h_i)}{\Pr\{X_i=1\}} 
-  \propto \int_\mathcal{B} \Ex[p_i|s_i,h_i,B]f_{\mathrm{DFE}}(s_i,h_i,B)dB,
-  \label{eq:msbdfe}
-\end{align}
-where $f_\text{DFE}$ denotes the joint density of the selection and dominance
-coefficient in the $L$-locus barrier, $X_i$ is an indicator random variable (equalling
-1 when a locally beneficial allele is observed at locus $i$ and zero
-otherwise), $B$ is a shorthand for the selection and dominance coefficients at
-the $L-1$ other loci ('$B$' for background), and we integrate over the set of
-all possible such backgrounds $\mathcal{B}$.
-Note that $f_\text{DFE}$ is equivalent to $f(s_i,h_i|X_i=1)$ in the absence of
-migration.
-We can characterize this conditional probability density using a Monte
-Carlo approach by sampling random $L$-locus genetic architectures from a DFE
-model and calculating for each $(s_i,h_i)$ pair in the barrier the expected
-beneficial allele frequency $\Ex[p_i|s_i,h_i,B]$ as a weight.
-The weighted sample will be distributed according to $f$.
+the island for that locus (see Methods, @eq:msbdfe).
 @Fig:diffdetail (B) shows approximations to the marginal distributions
 $f(s_i|X_i=1)$ and $f(h_i|X_i=1)$ obtained in this way for the heterogeneous
 barrier model assumed in the preceding section.
@@ -1098,11 +1108,12 @@ As expected, we find that as migration rates go up (colors in @fig:diffdetail
 B), the distribution of selection coefficients in the barrier at
 migration-selection balance shifts towards higher values of $s$, and that this
 effect becomes weaker with increasing $L\bar{s}$, which increases the extent by
-which small-effect alleles are protected from swamping by LD.
-Notably, we observe that recessives contribute *less* to differentiation than
-dominants do when migration is sufficiently strong, despite the fact that,
-conditional on no swamping, equilibrium frequencies of recessives are most
-affected by LD (@fig:diffdetail A). 
+which small-effect alleles are protected from swamping.
+Notably, recessives contribute *less* to adaptation than dominants when
+migration is sufficiently strong (i.e. more recessive alleles are swamped under
+the DFE where $s$ and $h$ are uncorrelated), despite the fact that, conditional
+on no swamping, equilibrium frequencies of recessives are most affected by LD
+(@fig:diffdetail A). 
 This is most strongly observed when $L\bar{s}$ is not large (top row in
 @fig:diffdetail).
 When $L\bar{s} = 1.5$ for instance, the depression in the conditional density
@@ -1192,28 +1203,25 @@ relative contribution of recessives in one case but not in the other.
 Speciation, in essence, amounts to the buildup and maintenance of linkage
 disequilibria [@felsenstein1981], with different sets of alleles maintained in
 different subpopulations.
-Local adaptation due to heterogeneous selection (as well as drift and mutation)
-across different subpopulations contributes to the buildup of LD, whereas
-migration and recombination (including hybridization) break up patterns of LD.
-Populations are reproductively isolated to the extent that selection
-counteracts this breaking up of associations through recombination.
-In this paper, we have focused on reproductive isolation through the
-maintenance of local adaptation in the face of gene flow, assuming a scenario
-of secondary contact between two divergently adapted populations that have not
-diverged too much.
-Of key importance is that, in the presence of selection, the rate at which
-patterns of LD are broken up due to migration and recombination is not
-independent of the magnitude of LD.
-Selection against migrant genotypes eliminates sets of alleles jointly, leading
-to stronger reproductive isolation due to divergent selection when local
-adaptation is polygenic.
+Heterogeneous selection can maintain different locally beneficial alleles in
+different populations across multiple loci.
+When migration occurs between such divergently selected populations, sets of
+divergent alleles are introduced jointly, leading to statistical associations
+(i.e. LD) between selected alleles, and possibly strong selection against
+migrant alleles, in turn causing (partial) reproductive isolation (RI).
+These associations are broken up by recombination, so that the extent to which
+RI can be maintained depends on the relative strength of selection, migration
+and recombination.
+In this paper, we have focused on RI through the maintenance of polygenic local
+adaptation in the face of gene flow, assuming a scenario of secondary contact
+between two divergently adapted populations that have not diverged too much.
 The effects of polygenic selection against migrant genotypes can be quantified
 by the gene flow factor $g$, or the associated effective migration rate $m_e =
 mg$, which accounts for the (potentially quite strong) selection against
 migrant genotypes and the rapid break up of LD among surviving invading alleles
-[@barton1986; @sachdeva2022].
-Although challenging, it should be noted that $g$ has a phenotypic
-interpretation, and can in principle be experimentally determined.
+[@barton1986].
+It should be noted that $g$ has a phenotypic interpretation, and can, at least in
+principle, be experimentally determined.
 
 We derived an expression for the effective migration rate in a mainland-island
 model with heterogeneous barriers and different life cycles, and showed how it
@@ -1237,14 +1245,15 @@ Secondly, it indicates that our rather crude approximation to the expected
 reproductive value of a migrant individual on the island (which assumes HWLE
 within the island population, that migrants only cross with residents, and that
 in each such cross the proportion of migrant alleles is exactly halved) is an
-adequate estimator of the gene flow factor.
+adequate estimator of the gene flow factor under weak migration.
 The approach enables us to study polygenic migration-selection balance in the
 mainland-island model using efficient numerical methods, and in particular to
-examine the relationship between the genetic architecture of local adaptation
-and the ability to maintain adaptive differentiation in the face of gene flow.
+examine the relationship between the genetic architecture of locally adaptive
+traits and the ability to maintain adaptive differentiation in the face of gene
+flow.
 
 
-## Effects of dominance in the polygenic regime
+## Effects of dominance and haploid selection in polygenic barriers
 
 Our analyses for homogeneous genetic architectures indicate that, when there is
 selection in the diploid phase, dominance can have a considerable impact on both
@@ -1270,7 +1279,7 @@ depends on the extent of differentiation) are strongly affected by the degree
 of dominance.
 It should be emphasized, however, that all our results assume a mainland-island
 model of migration.
-The effects of dominance may turn out more subtle in models of population
+The effects of dominance may turn out to be more subtle in models of population
 subdivision with multiple demes and more symmetric patterns of migration, in
 which case assumptions on environmental dependence of dominance may become 
 important [e.g.  @burger2013].
@@ -1300,28 +1309,31 @@ haploid phase may contribute more to local adaptation, similar to what has been
 described for sex chromosomes versus autosomes [@lasne2017], although this
 would of course depend on the relative extent of divergent selection in both
 phases.
-Although general theoretical predictions are challenging to make here as well
-without making numerous additional detailed assumptions, our work could provide
-a framework to guide empirical investigation of questions related to the
-relative importance of genetic variation in haploid-biased versus
-diploid-biased genes for local adaptation and reproductive isolation.
+While general theoretical predictions are challenging to make without making
+numerous additional assumptions, the fact that life cycle details can be
+accounted for using a few effective parameters (as in e.g. @fraisse2021b) can
+be useful in the empirical investigation of questions related to the relative
+importance of genetic variation in haploid-biased versus diploid-biased genes
+for local adaptation and reproductive isolation.
 
 
-## The genetic architecture of local adaptation at equilibrium
+## Heterogeneous architectures of polygenic barriers
 
-The assumption of a homogeneous architecture with some shared dominance
-coefficient across the entire barrier does not, however, appear very realistic.
+The assumption of a homogeneous architecture with equal effects on fitness
+all barrier loci does not, however, appear very realistic.
 We hence directed our attention to the more biologically relevant situation
 of a heterogeneous genetic architecture, where both dominance and selection
 coefficients vary across loci.
-The extent of adaptive differentiation that can be maintained in the polygenic
-regime was shown to be rather strongly affected by the variance of selective
-effects in the barrier (@fig:gammas), but much less so by variation in dominance
-coefficients when the latter are independent of the former (@fig:betas).
+The extent of adaptive differentiation that can be maintained was shown to be
+rather strongly affected by the variance of selective effects in the barrier
+(@fig:gammas), but much less so by variation in dominance coefficients when the
+latter are independent of the former (@fig:betas).
 When migration is not too strong, heterogeneity in selection coefficients is
 likely to weaken the barrier to gene flow generated by local adaptation 
 relative to a homogeneous barrier with the same average selection intensity
 per locus (@fig:gammas).
+
+## The genetic architecture of local adaptation at equilibrium
 
 We find that for low levels of reproductive isolation, as determined by
 the gff (recall that $\RI = 1-g$, where $g$ is, in turn, determined jointly by
