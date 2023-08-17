@@ -94,7 +94,7 @@ function singlelocuseq(M)
     end |> x->first.(x)
 end
 
-# amounts more or les sto the same I suppose.
+# amounts more or less to the same I suppose.
 function msedfe1(dfe, L, N, k, u, m; n=100) 
     sss = Float64[]
     hss = Float64[]

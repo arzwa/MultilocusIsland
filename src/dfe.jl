@@ -68,7 +68,7 @@ end
 # of a comparatively small number of transposable element insertions in
 # Drosophila, Caballero and Keightley (1994) made some inferences about the
 # joint distribution of h and s. They proposed that h, for a given s, was
-# uniformly distributed between 0 and exp(␃Ks). Our results differ from this
+# uniformly distributed between 0 and exp(-Ks). Our results differ from this
 # model in two ways with respect to the variance in h.  First, our results in-
 # dicate that, for a given s, values of h are not uniformly distributed but
 # rather strongly skewed. Second, the Caballero and Keightley model predicts a

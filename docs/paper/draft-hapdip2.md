@@ -88,7 +88,7 @@ generate migration load (a reduction in mean fitness due to the influx of
 locally maladaptive genes) or may lead to loss of local adaptation altogether
 (so-called *swamping* by gene flow) [e.g.  @lenormand2002].
 While local adaptation may be driven by a few conspicuous loci (e.g. adaptive
-melanism in peppermoth [@hof2016] or pocket mice [@nachman2003]), it is
+melanism in peppermoths [@hof2016] or pocket mice [@nachman2003]), it is
 believed to typically be polygenic, involving alleles of different effect at
 many loci across the genome [@pritchard2010; @lecorre2012; @barghi2020;
 @bomblies2022; @stankowski2023; @westram2018].
@@ -364,7 +364,7 @@ so, as subsequent backcrosses are essentially indistinguishable from residents.
 In order to derive a useful approximate expression for $g$, we shall make two
 further important assumptions:
 (1) both the resident and migrant gene pool, as well as each backcross
-generation is in Hardy-Weinberg and linkage equilibrium (HWLE);
+generation, is in Hardy-Weinberg and linkage equilibrium (HWLE);
 (2) the expected allele frequency at any locus in any backcross generation is
 midway between that of the parents (e.g. the mean of the mainland and island
 allele frequencies for the F1 generation).
@@ -442,7 +442,7 @@ deleterious allele on the island, @eq:gff can be simplified to
   g = e^{-2Ls_eh_e\Ex[p]}e^{-2Ls_e(1-2h_e)\Ex[pq]}
   \label{eq:eqeff2}
 \end{equation}
-where we have expressed $s_a = s_eh_e$ and $s_b = s_e(1-2h_e)$ in terms of the
+where we have expressed $s_a = -s_eh_e$ and $s_b = -s_e(1-2h_e)$ in terms of the
 effective selection coefficient $s_e$ against the invading allele, and the
 effective dominance coefficient $h_e$ of the invading allele over the locally
 beneficial one (see @sec:sldet).
@@ -1058,8 +1058,8 @@ expected differentiation at a focal selected locus (@fig:hetfocal).
 As the distribution of selection coefficients is generally believed to be at
 least somewhat leptokurtic (note that excess kurtosis $\propto \kappa^{-1}$ for
 our Gamma DFE model), these results suggest that heterogeneity in selection
-coefficients has important consequences for observable differentiation at
-migration selection-balance, which would not adequately be captured by
+coefficients can have important consequences for observable differentiation at
+migration selection-balance that would not be adequately captured by
 substituting an average selection coefficient in either single locus or
 multilocus theory.
 
@@ -1075,7 +1075,7 @@ dominance coefficients are sampled uniformly from the $[0,1]$ interval.
 Each dot is associated with a single locus in an $L$-locus barrier, and is
 colored according to its dominance coefficient (yellow for locally beneficial
 recessives ($h=1$), purple for dominants ($h=0$)).
-Each plot shows results for 1000 such loci, subssampled from a total of
+Each plot shows results for 1000 such loci, subsampled from a total of
 $150000/L$ simulations of $L$-locus barriers.
 \uline{(B)} Monte Carlo approximation to the marginal distribution of the selection and
 dominance coefficient conditional on observing a divergent allele on the island
@@ -1169,8 +1169,9 @@ models so that $\Ex[h] = 2/3$, assuming $\alpha=2, \beta=1$ for the independent
 model, $a=7.2, b=1.2, \sigma=1$ for the logistic model and $K=50$ for the CK94
 model (see @sec:dfe for details on the different DFE models considered here).
 The densities are approximated using a Monte Carlo approach, simulating 500
-replicate $L$ locus genetic architectures from the assumed DFE model, fitting a
-kernel density estimate to the sample so obtained.
+replicate $L$ locus genetic architectures from the assumed DFE model,
+determining the equilibrium allele frequencies for each replicate, and fitting
+a kernel density estimate to the sample so obtained.
 ](/home/arthur_z/vimwiki/build/img/2023-07-17/dfecomp.svg){#fig:dfecomp}
 
 
@@ -1962,7 +1963,7 @@ To calculate expected allele frequencies and allele frequency distributions at
 equilibrium, we solve the system self-consistently by performing a fixed point
 iteration.
 In words: for a given initial set of allele frequencies and heterozygosities,
-we calculate the gff at each locus using @eq:gff2; using these gff values, we
+we calculate the gff at each locus using @eq:gff; using these gff values, we
 next calculate expected allele frequencies and heterozygosities at each locus
 using numerical quadrature.
 This process is repeated until convergence.

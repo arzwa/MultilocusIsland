@@ -32,13 +32,6 @@ export Architecture, HapDipLocus, HapLocus, DipLocus
 include("models.jl")
 export simulate, MainlandIslandModel, FiniteIslandModel, HapDipDeme
 
-#include("sampler.jl")
-#include("proposal.jl")
-#export BetaProposal, BetaSwitchProposal, BetaFlipProposal, gibbs, GibbsSampler, UnitIntervalProposal
-#include("gff.jl")
-#include("proposal.jl")
-#include("_mrfsampler.jl")
-
 include("integration.jl")
 include("fixedpointit.jl")
 export expectedq, expectedsfs, fixedpointit, summarize_arch
