@@ -20,10 +20,10 @@ function sfs(ps; step=0.02, f=identity, density=true)
     es, f.(ws)
 end
 
-# Haldane's mapping function
+# Haldane's mapping function (map distance -> P recombination)
 haldane(y) = 0.5*(1-exp(-y))
 
-# the inverse of Haldane's mapping function
+# the inverse of Haldane's mapping function (P rec -> map distance)
 invhaldane(x) = -log(1 - 2x)
 
 # Compute recombination rates across a linear genome based on pairwise

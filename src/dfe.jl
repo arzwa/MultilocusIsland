@@ -4,9 +4,11 @@ struct IndependentDFE{T,V}
     hd::V
 end
 
-function randlocus(d::IndependentDFE)
-    s = rand(d.sd)
-    h = rand(d.hd)
+randlocus(d) = randlocus(Random.default_rng(), d)
+
+function randlocus(rng::AbstractRNG, d::IndependentDFE)
+    s = rand(rng, d.sd)
+    h = rand(rng, d.hd)
     DipLocus(-s*h, -s)
 end
 
@@ -30,10 +32,10 @@ function Logisticsbyh(sd, sh1::T, sh2::T, σ) where T<:Tuple
     Logisticsbyh(sd, a, b, σ)
 end
 
-function randlocus(dfe::Logisticsbyh)
+function randlocus(rng::AbstractRNG, dfe::Logisticsbyh)
     @unpack sd, a, b, σ = dfe
-    s = rand(sd)
-    h = _hfroms(s, a, b, σ)
+    s = rand(rng, sd)
+    h = _hfroms(rng, s, a, b, σ)
     DipLocus(-s*h, -s)
 end
 
@@ -43,8 +45,8 @@ function _getab(s1, h1, s2, h2)
     a, b
 end
 
-function _hfroms(s, a, b, σ)
-    lh = a + b*log(s) + rand(Normal(0,σ))
+function _hfroms(rng, s, a, b, σ)
+    lh = a + b*log(s) + rand(rng, Normal(0,σ))
     h  = 1/(1 + exp(-lh))
 end
 
@@ -84,9 +86,9 @@ end
     
 CKExponential(s̄, h̄) = CKExponential(Exponential(s̄), h̄, (1-2h̄)/(2s̄*h̄))
 
-function randlocus(d::CKExponential) 
-    s = rand(d.sd)
-    h = 1-rand(Uniform(0, exp(-d.K*s)))  
+function randlocus(rng::AbstractRNG, d::CKExponential) 
+    s = rand(rng, d.sd)
+    h = 1-rand(rng, Uniform(0, exp(-d.K*s)))  
     # note we use 1-h, not h, to get a large-effects tend to be recessive
     # pattern (i.e. for large effect alleles, the wild type coming from the
     # mainland tends to be dominant, these large effect alleles tended to be
@@ -113,9 +115,9 @@ end
     
 CKGamma(κ, λ, h̄) = CKGamma(Gamma(κ,1/λ), h̄, λ*((2h̄)^(-1/κ) - 1))
 
-function randlocus(d::CKGamma) 
-    s = rand(d.sd)
-    h = 1-rand(Uniform(0, exp(-d.K*s)))  
+function randlocus(rng::AbstractRNG, d::CKGamma) 
+    s = rand(rng, d.sd)
+    h = 1-rand(rng, Uniform(0, exp(-d.K*s)))  
     # note we use 1-h, not h, to get a large-effects tend to be recessive
     # pattern (i.e. for large effect alleles, the wild type coming from the
     # mainland tends to be dominant, these large effect alleles tended to be
@@ -143,9 +145,9 @@ end
     
 CKGamma2(κ, λ, h̄) = CKGamma2(Gamma(κ,1/λ), h̄, λ*((2h̄)^(-1/κ) - 1))
 
-function randlocus(d::CKGamma2) 
-    s = rand(d.sd)
-    h = rand(Uniform(0, exp(-d.K*s)))  
+function randlocus(rng::AbstractRNG, d::CKGamma2) 
+    s = rand(rng, d.sd)
+    h = rand(rng, Uniform(0, exp(-d.K*s)))  
     DipLocus(-s*h, -s)
 end
 
@@ -170,9 +172,9 @@ end
 
 AWGamma(sd, δ, Vh, β1, β2) = AWGamma(sd, Gamma(δ^2/Vh, Vh/δ), β1, β2)
 
-function randlocus(M::AWGamma)
-    s = rand(M.sd)
-    g = rand(M.hd)
+function randlocus(rng::AbstractRNG, M::AWGamma)
+    s = rand(rng, M.sd)
+    g = rand(rng, M.hd)
     h = g - mean(M.hd) + M.β1/(1 + M.β2*s)
     DipLocus(-s*h, -s)
 end

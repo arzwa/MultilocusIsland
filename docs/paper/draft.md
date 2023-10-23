@@ -1260,9 +1260,12 @@ We derived an expression for $m_e$ in a mainland-island model with
 heterogeneous barriers and a haplodiplontic life cycle, and showed how it can
 be used together with classical single locus population genetic theory to yield
 accurate predictions of equilibrium allele frequencies on the island.
+Importantly, this allows us to study the effects of coupling among barrier loci
+without assuming that locally deleterious alleles are somehow rare, enabling us
+to study swamping by gene flow in the polygenic setting.
 Our results show how the maintenance of adaptive differentiation in the face of
 gene flow depends jointly on the extent of LD, drift, dominance and variation
-in selective effects across the set of selected loci.
+in selective effects across loci.
 The general success of the approach indicates two important features of
 polygenic migration-selection balance.
 Firstly, it suggests that the 'separation of time scales' argument that is at
@@ -1278,7 +1281,7 @@ Secondly, it indicates that our rather crude approximation to the expected
 reproductive value of a migrant individual on the island (which assumes HWLE
 within the island population, that migrants only cross with residents, and that
 in each such cross the proportion of migrant alleles is exactly halved) is an
-adequate estimator of the gene flow factor under weak migration.
+adequate estimator of the gff under weak migration.
 The approach enables us to study polygenic migration-selection balance in the
 mainland-island model using efficient numerical methods, and in particular to
 examine the relationship between the genetic architecture of locally adaptive
@@ -1458,8 +1461,7 @@ exists *a priori* ([@fig:dfecomp]).
 
 Throughout, we have ignored physical linkage of the loci under selection.
 When recombination is strong relative to selection (i.e. linkage is weak), the
-same separation of time scales applies, and the above theory should work with
-minor modifications.
+above theory should work with minor modifications.
 However, accounting for tight linkage using an approach like ours, based on
 plugging in a suitable effective migration rate in single locus theory, is
 likely not straightforward.

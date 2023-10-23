@@ -150,7 +150,8 @@ function locusparams(M::MainlandIslandModel, p, pq)
     map(1:length(A)) do i
         @unpack s1, s01, s11 = A[i]
         g = _gff(A, p, pq, y, i)
-        (sa=s1+s01, sb=s11-2s01, N=M.D.Ne, m=M.m*g, u=u, pm=1-y[i])
+        (sa=s1+s01, sb=s11-2s01, N=M.D.Ne, m=M.m1*g, u=u, pm=1-y[i])
+        # XXX Should still change to deal with diploid migration!
     end
 end
 

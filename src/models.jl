@@ -108,7 +108,7 @@ end
 function simulate(rng, model::FiniteIslandModel, n, p0, drop=0, thin=1)
     pop = initialize_ibm(rng, model, p0)
     Ps   = Array{Float64,3}(undef, n, nloci(model), ndeme(model)) 
-    Ps[1,:,:] = allelefreqs(pop)
+    Ps[1,:,:] = allelefreqs(pop)   
     @showprogress 1 "[Running simulation]" for i=2:n
         pop = generation(rng, model, pop)
         Ps[i,:,:] = allelefreqs(pop)
@@ -134,7 +134,7 @@ end
 
 allelefreqs(pops::Vector{<:Population}) = cat(allelefreqs.(pops)..., dims=2)
 
-initialize_ibm(rng::AbstractRNG, M, p0) = p0
+#initialize_ibm(rng::AbstractRNG, M, p0) = p0
 
 function initialize_ibm(rng::AbstractRNG, M::FiniteIslandModel, p0::Matrix{Float64})
     map(k->initialize_island(rng, M[k].N, nloci(M[k]), p0[k,:]), 1:ndeme(M))
@@ -150,7 +150,7 @@ generation(model, pop) = generation(default_rng(), model, pop)
 function generation(
         rng  ::AbstractRNG, 
         model::FiniteIslandModel, 
-        pops ::Vector{Population{T}}) where T
+        pops) 
     D = ndeme(model)
     # migration
     pops = migration(rng, pops, model)
@@ -160,6 +160,11 @@ function generation(
         pops_[k] = reproduction(rng, model[k], pops[k])
     end
     return pops_
+end
+
+function reproduction(rng::AbstractRNG, deme::HapDipDeme, pop)
+    pat, mat = haploidphase(rng, deme, pop)
+    pop = diploidphase(rng, deme, pat, mat)
 end
 
 # Mainland-island model
@@ -291,6 +296,7 @@ function meiosis(rng::AbstractRNG, arch, hs)
     g = similar(hs[1]) 
     for i=1:L
         g[i] = hs[k][i]
+        i == L && break
         k = rand(rng) < arch.rrate[i] ? 1 + k % 2 : k
     end
     return g
