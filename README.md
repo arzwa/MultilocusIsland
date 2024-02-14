@@ -137,6 +137,9 @@ vcat(xs...)[end-10:end,1:5]
 
 Of course, one should do more/longer simulations.
 
+If you have **any questions** on how to install, use, ... the package, *do
+not hesitate to open an issue, I'd be happy to help.
+
 ---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
