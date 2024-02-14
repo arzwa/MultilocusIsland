@@ -1,48 +1,36 @@
 """
     MultilocusIsland
-
-Implements numerical tools for approximating multilocus allele frequency
-distributions at equilibrium in the mainland-island model for haploid, diploid
-and haplodiplontic populations.
 """
 module MultilocusIsland
 
-using StatsBase
-using Random
 using Printf
-using Parameters
-using Distributions
-using ThreadTools
 using QuadGK
-using NonlinearSolve
-using StaticArrays
-using Bijectors
-using Bijectors: transform
-using LogExpFunctions: logit, logistic  
+using Random
+using Roots
+using ForwardDiff
+using Reexport
+using Parameters
+using StatsBase
+using Distributions
+using LinearAlgebra
 using ProgressMeter
-using Roots, ForwardDiff # for deterministic bifurcation analysis
-import Random: default_rng
-import StatsBase: sample
-import NonlinearSolve: solve
-# these logit/logistic behave better for extreme arguments
+@reexport using WrightDistribution
+import WrightDistribution: expectedpq
 
 include("architecture.jl")
-export Architecture, HapDipLocus, HapLocus, DipLocus
-
-include("models.jl")
-export simulate, MainlandIslandModel, FiniteIslandModel, HapDipDeme
-
-include("integration.jl")
-include("fixedpointit.jl")
-export expectedq, expectedsfs, fixedpointit, summarize_arch
-
-include("bifurcation.jl")
-export findroots_ms, solve
-
+include("recombination.jl")
+include("deme.jl")
+include("mainlandisland.jl")
+include("metapopulation.jl")
+include("simulation.jl")
+include("effectivemigration.jl")
 include("utils.jl")
-export _Ne2N, sfs, harmonicmean
+include("deterministic.jl")
 
-include("dfe.jl")
-export IndependentDFE, CKExponential, CKGamma, Logisticsbyh, randlocus
+vvcat(x) = vcat(x...)
 
-end # module MultilocusIsland
+export Locus, Architecture, Deme, FiniteIslands, MainlandIsland, FixedMainland
+export generation!, initpop, vvcat, sasb, sehe, Ne2N, eqpdf, simulate!
+export humanmap, humanmap2, flymap, flymap2
+
+end
